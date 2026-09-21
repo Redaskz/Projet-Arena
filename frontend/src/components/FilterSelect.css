@@ -1,0 +1,14 @@
+.filter-select {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-select select {
+  /* Jamais plus large que l'écran, même avec un très long nom de jeu. */
+  max-width: 100%;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+}

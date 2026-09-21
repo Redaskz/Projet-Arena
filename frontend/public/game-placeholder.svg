@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" role="img" aria-label="Jaquette indisponible">
+  <rect width="320" height="180" fill="#262833"/>
+  <g fill="none" stroke="#6c6f80" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="110" y="62" width="100" height="56" rx="28"/>
+    <path d="M138 80v20M128 90h20"/>
+  </g>
+  <circle cx="182" cy="84" r="5" fill="#6c6f80"/>
+  <circle cx="194" cy="96" r="5" fill="#6c6f80"/>
+</svg>

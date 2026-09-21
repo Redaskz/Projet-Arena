@@ -63,3 +63,29 @@
   color: var(--color-text-muted, #a0a3b1);
   font-size: 0.9rem;
 }
+
+/* Les paragraphes passés en children suivent l'espacement de .card__body
+   (gap) au lieu des grandes marges par défaut du navigateur. */
+.card__body p {
+  margin: 0;
+}
+
+/*
+  Grille de cartes, réutilisable par toutes les pages de liste.
+  auto-fill + minmax(260px, 1fr) : le navigateur met autant de colonnes de
+  260px minimum qu'il peut, puis les élargit pour remplir la ligne.
+  Aucune media query nécessaire pour passer de 4 à 3 à 2 colonnes.
+*/
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+/* Sous 640px, une seule colonne : sans cette règle, un écran plus étroit
+   que 260px + marges ferait déborder la colonne minimale à droite. */
+@media (max-width: 640px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,34 @@
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.form-field input,
+.form-field select {
+  /* 100% de la largeur disponible, bordure comprise : pas de débordement mobile. */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 24rem;
+  /* 44px : taille minimale recommandée pour une cible tactile (doigt). */
+  min-height: 44px;
+  padding: 0.5rem;
+  font: inherit;
+}
+
+/* Bouton d'envoi d'un formulaire : même hauteur tactile que les champs. */
+.form-submit {
+  min-height: 44px;
+}
+
+/* Champ en erreur : bordure rouge, repérable sans lire le message. */
+.form-field [aria-invalid='true'] {
+  border: 2px solid #d63031;
+}
+
+.form-field__error {
+  margin: 0;
+  color: #d63031;
+  font-size: 0.875rem;
+}

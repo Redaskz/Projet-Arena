@@ -1,53 +1,70 @@
 export interface Game {
   id: number;
   name: string;
-  slug: string;
-  description: string;
+  genre: string;
+  platform: string;
+  team_size: number;
+  cover_url: string | null;
+  rating: number | null;
+  released_at: string | null;
+  rawg_id: number | null;
+  created_at: string;
 }
 
 export interface Team {
   id: number;
   name: string;
   tag: string;
-  gameId: number;
-  captainId: number;
+  game_id: number;
+  captain_id: number;
+  created_at: string;
+  players?: Player[];
+}
+
+export interface Player {
+  id: number;
+  gamertag: string;
+  role: string;
+  country: string | null;
+  team_id: number;
+  created_at: string;
 }
 
 export interface Tournament {
   id: number;
   name: string;
-  gameId: number;
+  game_id: number;
   status: 'upcoming' | 'ongoing' | 'finished';
-  startDate: string;
-  maxTeams: number;
+  start_date: string;
+  max_teams: number;
 }
 
 export interface Match {
   id: number;
-  tournamentId: number;
+  tournament_id: number;
   round: number;
-  teamAId: number;
-  teamBId: number;
-  scoreA: number | null;
-  scoreB: number | null;
+  team_a_id: number;
+  team_b_id: number;
+  score_a: number | null;
+  score_b: number | null;
   status: 'scheduled' | 'played';
-  scheduledAt: string;
+  scheduled_at: string;
 }
 
 export interface Comment {
   id: number;
-  tournamentId: number;
-  userId: number;
+  tournament_id: number;
+  user_id: number;
   content: string;
-  createdAt: string;
+  created_at: string;
 }
 
 export interface Registration {
   id: number;
-  tournamentId: number;
-  teamId: number;
+  tournament_id: number;
+  team_id: number;
   status: 'pending' | 'accepted' | 'rejected';
-  registeredAt: string;
+  registered_at: string;
 }
 
 export interface User {

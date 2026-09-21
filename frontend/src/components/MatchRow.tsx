@@ -4,22 +4,16 @@ interface MatchRowProps {
   match: Match;
   teamA: Team;
   teamB: Team;
-  onScoreSaved?: () => void;
 }
 
-function MatchRow({
-  match,
-  teamA,
-  teamB,
-  onScoreSaved,
-}: MatchRowProps) {
+function MatchRow({ match, teamA, teamB }: MatchRowProps) {
   return (
     <article>
       <div>
         <strong>{teamA.name}</strong>
-        <span> {match.scoreA ?? '-'} </span>
+        <span> {match.score_a ?? '-'} </span>
         <span> - </span>
-        <span>{match.scoreB ?? '-'}</span>
+        <span>{match.score_b ?? '-'}</span>
         <strong> {teamB.name}</strong>
       </div>
 
@@ -28,12 +22,6 @@ function MatchRow({
           ? 'Match terminé'
           : 'Match à jouer'}
       </p>
-
-      {onScoreSaved && (
-        <button type="button" onClick={onScoreSaved}>
-          Actualiser
-        </button>
-      )}
     </article>
   );
 }

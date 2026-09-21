@@ -1,5 +1,6 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import GamesPage from './pages/GamesPage';
 import LoginPage from './pages/LoginPage';
 import MatchesPage from './pages/MatchesPage';
@@ -13,7 +14,11 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/tournaments" element={<TournamentsPage />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route path="/tournaments" element={<TournamentsPage />} />
+          </Route>
+
           <Route
             path="/tournaments/:id"
             element={<TournamentDetailPage />}
@@ -21,6 +26,8 @@ function App() {
           <Route path="/games" element={<GamesPage />} />
           <Route path="/teams" element={<TeamsPage />} />
           <Route path="/matches" element={<MatchesPage />} />
+
+          <Route path="*" element={<Navigate to="/tournaments" replace />} />
         </Routes>
       </Layout>
     </BrowserRouter>

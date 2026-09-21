@@ -1,0 +1,65 @@
+/*
+  Styles de Card, dans un fichier à part pour ne pas toucher index.css (Yanis).
+  Les couleurs passent par des variables CSS avec une valeur de secours :
+  si le thème global définit --color-surface, la carte le suit ; sinon elle
+  reste lisible avec les valeurs par défaut.
+*/
+.card {
+  display: flex;
+  flex-direction: column;
+  /* min-width: 0 empêche une carte de déborder de sa colonne de grille
+     quand un titre très long ne peut pas se couper. */
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border, #2e3040);
+  border-radius: 8px;
+  background: var(--color-surface, #1b1c24);
+  color: var(--color-text, #f2f2f5);
+}
+
+.card__image {
+  display: block;
+  width: 100%;
+  /* Ratio fixe : toutes les cartes d'une grille ont la même hauteur d'image,
+     même si les visuels fournis par l'API ont des formats différents. */
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 1.1rem;
+  /* Coupe les noms sans espace (ex. "xXDarkSasukeXx") au lieu de déborder. */
+  overflow-wrap: anywhere;
+}
+
+.card__badge {
+  flex-shrink: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-accent, #6c5ce7);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.card__subtitle {
+  margin: 0;
+  color: var(--color-text-muted, #a0a3b1);
+  font-size: 0.9rem;
+}

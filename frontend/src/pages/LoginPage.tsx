@@ -1,79 +1,145 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-function LoginPage() {
+interface LoginForm {
+  email: string;
+  password: string;
+}
+
+export default function LoginPage() {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form, setForm] = useState<LoginForm>({
+    email: "",
+    password: "",
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const [errors, setErrors] = useState<Partial<LoginForm>>({});
+  const [submitError, setSubmitError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (field: keyof LoginForm, value: string) => {
+    setForm((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
+
+    setErrors((previous) => ({
+      ...previous,
+      [field]: "",
+    }));
+
+    setSubmitError("");
+  };
+
+  const validate = (): boolean => {
+    const newErrors: Partial<LoginForm> = {};
+
+    if (!form.email.trim()) {
+      newErrors.email = "L'adresse e-mail est obligatoire.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = "L'adresse e-mail n'est pas valide.";
+    }
+
+    if (!form.password.trim()) {
+      newErrors.password = "Le mot de passe est obligatoire.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
 
-    if (!email.trim()) {
-      setError("L'adresse e-mail est obligatoire.");
+    setSubmitError("");
+
+    if (!validate()) {
       return;
     }
 
-    if (!password) {
-      setError("Le mot de passe est obligatoire.");
-      return;
-    }
-
-    setIsSubmitting(true);
+    setLoading(true);
 
     try {
-      await login(email, password);
+      await login(form.email, form.password);
+      navigate("/tournaments");
     } catch (error) {
-      setError(
+      setSubmitError(
         error instanceof Error
           ? error.message
-          : "Une erreur est survenue.",
+          : "Une erreur est survenue lors de la connexion.",
       );
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <main>
-      <h1>Connexion</h1>
+    <main className="login-page">
+      <section className="login-card">
+        <h1>Connexion</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">E-mail</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="form-field">
+            <label htmlFor="email">Adresse e-mail</label>
 
-        <div>
-          <label htmlFor="password">Mot de passe</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            disabled={isSubmitting}
-          />
-        </div>
+            <input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={(event) =>
+                handleChange("email", event.target.value)
+              }
+              disabled={loading}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
+            />
 
-        {error && <p>{error}</p>}
+            {errors.email && (
+              <p id="email-error" className="field-error">
+                {errors.email}
+              </p>
+            )}
+          </div>
 
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Connexion..." : "Se connecter"}
-        </button>
-      </form>
+          <div className="form-field">
+            <label htmlFor="password">Mot de passe</label>
+
+            <input
+              id="password"
+              type="password"
+              value={form.password}
+              onChange={(event) =>
+                handleChange("password", event.target.value)
+              }
+              disabled={loading}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={
+                errors.password ? "password-error" : undefined
+              }
+            />
+
+            {errors.password && (
+              <p id="password-error" className="field-error">
+                {errors.password}
+              </p>
+            )}
+          </div>
+
+          {submitError && (
+            <p className="form-error" role="alert">
+              {submitError}
+            </p>
+          )}
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
+      </section>
     </main>
   );
 }
-
-export default LoginPage;

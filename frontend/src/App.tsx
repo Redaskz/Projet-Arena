@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import GamesPage from './pages/GamesPage';
 import LoginPage from './pages/LoginPage';
+import MatchesPage from './pages/MatchesPage';
 import TeamsPage from './pages/TeamsPage';
 import TournamentDetailPage from './pages/TournamentDetailPage';
 import TournamentsPage from './pages/TournamentsPage';
@@ -19,6 +20,7 @@ function App() {
           />
           <Route path="/games" element={<GamesPage />} />
           <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/matches" element={<MatchesPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>

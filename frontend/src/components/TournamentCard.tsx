@@ -1,5 +1,4 @@
 import Card from "./Card";
-import StatusBadge from "./StatusBadge";
 import type { Tournament } from "../types";
 
 interface TournamentCardProps {
@@ -11,14 +10,11 @@ function TournamentCard({
   tournament,
   gameName,
 }: TournamentCardProps) {
-  const badgeStatus =
-    tournament.status === "upcoming" ? "open" : tournament.status;
-
   return (
     <Card
       title={tournament.name}
       subtitle={gameName}
-      badge={<StatusBadge status={badgeStatus} />}
+      badge={tournament.status}
     >
       <p>
         Début :{" "}

@@ -3,7 +3,6 @@ import type { CSSProperties } from "react";
 type Status =
   | "draft"
   | "open"
-  | "upcoming"
   | "ongoing"
   | "finished"
   | "pending"
@@ -58,11 +57,6 @@ const statusStyles: Record<Status, BadgeStyle> = {
     backgroundColor: "#e5e7eb",
     color: "#374151",
   },
-
-  upcoming: {
-  backgroundColor: "#fef3c7",
-  color: "#92400e",
-},
 };
 
 const baseStyle: CSSProperties = {

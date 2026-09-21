@@ -1,9 +1,9 @@
 // TODO: provisoire — tout ce dossier disparaît quand le backend servira
-// GET /games, GET /teams, POST /teams et GET /tournaments. Il suffira alors de
-// passer USE_MOCKS à false : les pages repartiront sur les vraies requêtes.
+// GET /games, GET /teams et POST /teams. Il suffira alors de passer
+// USE_MOCKS à false : les pages repartiront sur les vraies requêtes.
 import { ApiError } from '../api/client';
 import type { TeamCreate } from '../api/teams';
-import type { Game, Team, Tournament } from '../types';
+import type { Game, Team } from '../types';
 
 // Typé boolean explicitement : sinon TypeScript le voit comme la constante
 // `true` et considère la branche "vraie API" comme du code mort.
@@ -86,28 +86,4 @@ export async function createTeamMock(payload: TeamCreate): Promise<Team> {
   };
   mockTeams = [...mockTeams, team];
   return team;
-}
-
-// Tournois fictifs de Victor (page /tournaments), repris de sa branche
-// feat/tournaments-page et convertis en snake_case pour suivre types/index.ts.
-export const MOCK_TOURNAMENTS: Tournament[] = [
-  { id: 1, name: 'Arena Masters CS2', game_id: 1, status: 'upcoming', start_date: '2026-10-05T18:00:00', max_teams: 16 },
-  { id: 2, name: 'Valorant Winter Cup', game_id: 2, status: 'ongoing', start_date: '2026-09-20T18:00:00', max_teams: 16 },
-  { id: 3, name: 'League of Legends Championship', game_id: 3, status: 'finished', start_date: '2026-08-15T14:00:00', max_teams: 32 },
-  { id: 4, name: 'FC 25 Arena Cup', game_id: 4, status: 'upcoming', start_date: '2026-10-12T15:00:00', max_teams: 16 },
-  { id: 5, name: 'Street Fighter Open', game_id: 5, status: 'ongoing', start_date: '2026-09-18T19:00:00', max_teams: 32 },
-  { id: 6, name: 'Fortnite Battle Arena', game_id: 6, status: 'finished', start_date: '2026-07-20T16:00:00', max_teams: 24 },
-  { id: 7, name: 'CS2 Community Cup', game_id: 1, status: 'ongoing', start_date: '2026-09-19T17:00:00', max_teams: 8 },
-  { id: 8, name: 'Valorant Open Series', game_id: 2, status: 'upcoming', start_date: '2026-10-20T18:00:00', max_teams: 32 },
-  { id: 9, name: 'League Arena Masters', game_id: 3, status: 'finished', start_date: '2026-08-30T16:00:00', max_teams: 16 },
-  { id: 10, name: 'Fortnite Pro Cup', game_id: 6, status: 'upcoming', start_date: '2026-10-25T20:00:00', max_teams: 16 },
-];
-
-// Accesseurs utilisés par TournamentsPage (Victor) : une copie à chaque appel.
-export function getMockGames(): Game[] {
-  return [...MOCK_GAMES];
-}
-
-export function getMockTournaments(): Tournament[] {
-  return [...MOCK_TOURNAMENTS];
 }

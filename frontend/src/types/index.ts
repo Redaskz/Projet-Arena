@@ -1,16 +1,33 @@
 export interface Game {
   id: number;
   name: string;
-  slug: string;
-  description: string;
+  genre: string;
+  platform: string;
+  team_size: number;
+  cover_url: string | null;
+  rating: number | null;
+  released_at: string | null;
+  rawg_id: number | null;
+  created_at: string;
 }
 
 export interface Team {
   id: number;
   name: string;
   tag: string;
-  gameId: number;
-  captainId: number;
+  game_id: number;
+  captain_id: number;
+  created_at: string;
+  players?: Player[];
+}
+
+export interface Player {
+  id: number;
+  gamertag: string;
+  role: string;
+  country: string | null;
+  team_id: number;
+  created_at: string;
 }
 
 export interface Tournament {

@@ -16,6 +16,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -39,13 +40,13 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Au chargement de l'application, on récupère la session sauvegardée.
-// Cela permet de rester connecté après un F5.
   useEffect(() => {
     const storedAuth = localStorage.getItem(STORAGE_KEY);
 
     if (!storedAuth) {
+      setIsLoading(false);
       return;
     }
 
@@ -58,15 +59,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(auth.user);
       setToken(auth.token);
     } catch {
-      // Si les données du localStorage sont invalides,
-      // on les supprime pour repartir sur une session propre.
       localStorage.removeItem(STORAGE_KEY);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   async function login(email: string, password: string): Promise<void> {
-    // TODO: provisoire — remplacé par l'appel au backend lorsque
-    // l'endpoint /auth/login sera utilisé par le frontend.
     if (email !== "demo@arena.fr" || password !== "arena123") {
       throw new Error("Identifiants invalides.");
     }
@@ -79,8 +78,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(authData.user);
     setToken(authData.token);
 
-    // On sauvegarde la session pour qu'un rafraîchissement
-    // de la page ne déconnecte pas l'utilisateur.
     localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
   }
 
@@ -94,11 +91,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     token,
     isAuthenticated: user !== null && token !== null,
+    isLoading,
     login,
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {

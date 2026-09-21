@@ -1,10 +1,12 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-interface ProtectedRouteProps {}
+function ProtectedRoute() {
+  const { user, isLoading } = useAuth();
 
-export default function ProtectedRoute({}: ProtectedRouteProps) {
-  const { user } = useAuth();
+  if (isLoading) {
+    return <p>Chargement...</p>;
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -12,3 +14,5 @@ export default function ProtectedRoute({}: ProtectedRouteProps) {
 
   return <Outlet />;
 }
+
+export default ProtectedRoute;

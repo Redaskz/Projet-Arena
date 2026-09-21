@@ -56,7 +56,8 @@ function MatchesPage() {
       const teamMatches = matches.filter(
         (match) =>
           match.status === 'played' &&
-          (match.teamAId === team.id || match.teamBId === team.id),
+          (match.team_a_id === team.id ||
+            match.team_b_id === team.id),
       );
 
       let wins = 0;
@@ -66,9 +67,11 @@ function MatchesPage() {
       let difference = 0;
 
       teamMatches.forEach((match) => {
-        const isTeamA = match.teamAId === team.id;
-        const teamScore = isTeamA ? match.scoreA : match.scoreB;
-        const opponentScore = isTeamA ? match.scoreB : match.scoreA;
+        const isTeamA = match.team_a_id === team.id;
+        const teamScore = isTeamA ? match.score_a : match.score_b;
+        const opponentScore = isTeamA
+          ? match.score_b
+          : match.score_a;
 
         if (teamScore === null || opponentScore === null) {
           return;
@@ -159,8 +162,8 @@ function MatchesPage() {
 
     try {
       await patch<Match>(`/matches/${match.id}`, {
-        scoreA,
-        scoreB,
+        score_a: scoreA,
+        score_b: scoreB,
         status: 'played',
       });
 
@@ -199,7 +202,7 @@ function MatchesPage() {
   }
 
   return (
-    <main>
+    <>
       <h1>Matchs</h1>
 
       <section>
@@ -227,8 +230,8 @@ function MatchesPage() {
           <p>Aucun match ne correspond au filtre.</p>
         ) : (
           filteredMatches.map((match) => {
-            const teamA = getTeam(match.teamAId);
-            const teamB = getTeam(match.teamBId);
+            const teamA = getTeam(match.team_a_id);
+            const teamB = getTeam(match.team_b_id);
 
             if (!teamA || !teamB) {
               return null;
@@ -307,7 +310,7 @@ function MatchesPage() {
         <h2>Classement</h2>
         <StandingsTable standings={standings} />
       </section>
-    </main>
+    </>
   );
 }
 

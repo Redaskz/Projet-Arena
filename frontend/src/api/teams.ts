@@ -2,12 +2,13 @@ import { post } from './client';
 import type { Team } from '../types';
 import { USE_MOCKS, createTeamMock } from '../mocks';
 
-// Ce que le client envoie pour créer une équipe. Pas d'id ni de captainId :
-// ce sont des champs remplis par le serveur, le client n'a pas à les inventer.
+// Ce que le client envoie pour créer une équipe. Noms en snake_case, comme les
+// schémas FastAPI. Pas d'id, de captain_id ni de created_at : ce sont des champs
+// remplis par le serveur, le client n'a pas à les inventer.
 export interface TeamCreate {
   name: string;
   tag: string;
-  gameId: number;
+  game_id: number;
 }
 
 // Les composants n'appellent jamais fetch : ils appellent createTeam, qui passe

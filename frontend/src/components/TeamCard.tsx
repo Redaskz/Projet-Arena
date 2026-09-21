@@ -4,7 +4,7 @@ import Card from './Card';
 interface TeamCardProps {
   team: Team;
   // Le nom du jeu est passé par la page, pas cherché ici : une équipe ne
-  // contient que gameId, et c'est la page qui a déjà la liste des jeux.
+  // contient que game_id, et c'est la page qui a déjà la liste des jeux.
   // La carte reste purement affichage, sans requête ni recherche.
   gameName: string;
 }

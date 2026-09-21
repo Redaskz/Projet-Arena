@@ -1,29 +1,29 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { ApiError } from '../api/client';
-import type { GameDetails } from '../api/games';
+import type { Game } from '../types';
 import { createTeam } from '../api/teams';
 import ErrorMessage from './ErrorMessage';
 import FormField from './FormField';
 
 interface TeamCreateFormProps {
-  games: GameDetails[];
+  games: Game[];
   // Appelé après une création réussie : la page recharge alors sa liste.
   onCreated: () => void;
 }
 
-// Tous les champs sont des chaînes, même gameId : un input ou un select
+// Tous les champs sont des chaînes, même game_id : un input ou un select
 // renvoie toujours du texte. La conversion en nombre se fait à l'envoi.
 interface TeamForm {
   name: string;
   tag: string;
-  gameId: string;
+  game_id: string;
 }
 
 // Au plus un message d'erreur par champ du formulaire.
 type TeamFormErrors = Partial<Record<keyof TeamForm, string>>;
 
-const EMPTY_FORM: TeamForm = { name: '', tag: '', gameId: '' };
+const EMPTY_FORM: TeamForm = { name: '', tag: '', game_id: '' };
 
 // Fonction pure, en dehors du composant : elle ne dépend que du formulaire,
 // donc facile à lire, à tester et à modifier (ex. changer les bornes du tag).
@@ -40,8 +40,8 @@ function validateTeamForm(form: TeamForm): TeamFormErrors {
     errors.tag = 'Le tag doit contenir entre 3 et 5 caractères.';
   }
 
-  if (form.gameId === '') {
-    errors.gameId = 'Choisissez un jeu.';
+  if (form.game_id === '') {
+    errors.game_id = 'Choisissez un jeu.';
   }
 
   return errors;
@@ -79,7 +79,7 @@ function TeamCreateForm({ games, onCreated }: TeamCreateFormProps) {
       await createTeam({
         name: form.name.trim(),
         tag: form.tag.trim(),
-        gameId: Number(form.gameId),
+        game_id: Number(form.game_id),
       });
       setForm(EMPTY_FORM);
       onCreated();
@@ -127,12 +127,12 @@ function TeamCreateForm({ games, onCreated }: TeamCreateFormProps) {
         />
       </FormField>
 
-      <FormField id="team-game" label="Jeu" error={errors.gameId}>
+      <FormField id="team-game" label="Jeu" error={errors.game_id}>
         <select
           id="team-game"
-          value={form.gameId}
-          onChange={(event) => updateField('gameId', event.target.value)}
-          aria-invalid={errors.gameId !== undefined}
+          value={form.game_id}
+          onChange={(event) => updateField('game_id', event.target.value)}
+          aria-invalid={errors.game_id !== undefined}
           aria-describedby="team-game-error"
         >
           <option value="">-- Choisir un jeu --</option>
@@ -147,7 +147,7 @@ function TeamCreateForm({ games, onCreated }: TeamCreateFormProps) {
       {submitError && <ErrorMessage message={submitError} />}
 
       {/* Désactivé pendant l'envoi : empêche un double clic de créer deux fois l'équipe. */}
-      <button type="submit" disabled={submitting}>
+      <button type="submit" className="form-submit" disabled={submitting}>
         {submitting ? 'Création...' : "Créer l'équipe"}
       </button>
     </form>

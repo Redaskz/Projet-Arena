@@ -1,9 +1,9 @@
-import { GENRE_LABELS } from '../api/games';
-import type { GameDetails } from '../api/games';
+import { getGenreLabel } from '../api/games';
+import type { Game } from '../types';
 import Card from './Card';
 
 interface GameCardProps {
-  game: GameDetails;
+  game: Game;
 }
 
 // Image affichée quand RAWG n'a pas fourni de jaquette (cover_url à null).
@@ -19,10 +19,12 @@ function GameCard({ game }: GameCardProps) {
   return (
     <Card
       title={game.name}
-      subtitle={game.platform ?? 'Plateforme non précisée'}
-      // ?? et pas || : on ne remplace que null/undefined, jamais une chaîne valide.
+      // `||` et pas `??` : platform est typé string, mais le backend peut
+      // renvoyer null (champ facultatif) ou une chaîne vide. `||` couvre les deux.
+      subtitle={game.platform || 'Plateforme non précisée'}
+      // `??` ici : on ne remplace que null, jamais une URL valide.
       imageUrl={game.cover_url ?? PLACEHOLDER_COVER}
-      badge={GENRE_LABELS[game.genre]}
+      badge={getGenreLabel(game.genre)}
     >
       <p>
         {game.team_size} {playersLabel} par équipe

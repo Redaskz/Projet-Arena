@@ -12,14 +12,16 @@ export const GENRE_LABELS: Record<GameGenre, string> = {
   battle_royale: 'Battle royale',
 };
 
-// TODO: provisoire — le type Game de types/index.ts (Yanis) ne correspond pas à
-// ce que renvoie GET /games (schéma GameRead du backend). Ce type recopie
-// GameRead ; il sera supprimé quand Game sera aligné, et remplacé par Game.
-export interface GameDetails {
-  id: number;
-  name: string;
-  genre: GameGenre;
-  platform: string | null;
-  team_size: number;
-  cover_url: string | null;
+// Game.genre est typé `string` dans types/index.ts : TypeScript ne peut donc
+// pas savoir que c'est l'un des 5 genres. Cette fonction le vérifie à
+// l'exécution ; le `value is GameGenre` dit ensuite à TypeScript que la valeur
+// est sûre, sans cast `as`.
+export function isGameGenre(value: string): value is GameGenre {
+  return value in GENRE_LABELS;
+}
+
+// Libellé d'un genre, ou le texte brut si le backend renvoie un genre inconnu
+// du front : on affiche quelque chose plutôt que de planter.
+export function getGenreLabel(genre: string): string {
+  return isGameGenre(genre) ? GENRE_LABELS[genre] : genre;
 }

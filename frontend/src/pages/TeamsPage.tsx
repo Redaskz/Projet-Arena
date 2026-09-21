@@ -1,4 +1,3 @@
-import type { GameDetails } from '../api/games';
 import ErrorMessage from '../components/ErrorMessage';
 import FilterSelect from '../components/FilterSelect';
 import Loader from '../components/Loader';
@@ -7,13 +6,13 @@ import TeamCreateForm from '../components/TeamCreateForm';
 import { useFetch } from '../hooks/useFetch';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { MOCK_GAMES, USE_MOCKS, getMockTeams, mockFetchState } from '../mocks';
-import type { Team } from '../types';
+import type { Game, Team } from '../types';
 
 function TeamsPage() {
   // refetch vient toujours du vrai useFetch : l'appeler provoque un nouveau
   // rendu de la page, qui relit alors la liste (vraie ou fictive).
   const { refetch, ...fetchedTeams } = useFetch<Team[]>('/teams');
-  const fetchedGames = useFetch<GameDetails[]>('/games');
+  const fetchedGames = useFetch<Game[]>('/games');
 
   // TODO: provisoire — données fictives tant que /teams et /games ne répondent pas.
   const teamsState = USE_MOCKS ? mockFetchState(getMockTeams()) : fetchedTeams;
@@ -39,8 +38,8 @@ function TeamsPage() {
   }
 
   // Une équipe ne connaît que l'id de son jeu : on cherche son nom dans la liste.
-  function getGameName(gameId: number): string {
-    return games?.find((game) => game.id === gameId)?.name ?? 'Jeu inconnu';
+  function getGameName(id: number): string {
+    return games?.find((game) => game.id === id)?.name ?? 'Jeu inconnu';
   }
 
   const gameOptions = games.map((game) => ({ value: String(game.id), label: game.name }));
@@ -53,7 +52,7 @@ function TeamsPage() {
   const visibleTeams =
     activeFilter === 'all'
       ? teams
-      : teams.filter((team) => String(team.gameId) === activeFilter);
+      : teams.filter((team) => String(team.game_id) === activeFilter);
 
   // État 3 : succès.
   return (
@@ -78,7 +77,7 @@ function TeamsPage() {
       ) : (
         <div className="card-grid">
           {visibleTeams.map((team) => (
-            <TeamCard key={team.id} team={team} gameName={getGameName(team.gameId)} />
+            <TeamCard key={team.id} team={team} gameName={getGameName(team.game_id)} />
           ))}
         </div>
       )}

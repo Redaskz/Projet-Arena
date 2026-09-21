@@ -1,5 +1,4 @@
-import { GENRE_LABELS } from '../api/games';
-import type { GameDetails } from '../api/games';
+import { GENRE_LABELS, isGameGenre } from '../api/games';
 import ErrorMessage from '../components/ErrorMessage';
 import FilterSelect from '../components/FilterSelect';
 import GameCard from '../components/GameCard';
@@ -7,13 +6,14 @@ import Loader from '../components/Loader';
 import { useFetch } from '../hooks/useFetch';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { MOCK_GAMES, USE_MOCKS, mockFetchState } from '../mocks';
+import type { Game } from '../types';
 
 // Options du filtre calculées une seule fois, hors du composant :
 // la liste des genres est fixe (enum du backend), elle ne dépend pas des données.
 const GENRE_OPTIONS = Object.entries(GENRE_LABELS).map(([value, label]) => ({ value, label }));
 
 function GamesPage() {
-  const fetched = useFetch<GameDetails[]>('/games');
+  const fetched = useFetch<Game[]>('/games');
   // TODO: provisoire — données fictives tant que GET /games n'est pas branché.
   const { data: games, loading, error } = USE_MOCKS ? mockFetchState(MOCK_GAMES) : fetched;
 
@@ -24,7 +24,7 @@ function GamesPage() {
   // Protection : si localStorage contient un genre qui n'existe plus
   // (valeur modifiée à la main, ancien genre supprimé...), on repart sur 'all'
   // au lieu d'afficher une liste vide incompréhensible.
-  const activeGenre = genre in GENRE_LABELS ? genre : 'all';
+  const activeGenre = isGameGenre(genre) ? genre : 'all';
 
   // État 1 : chargement.
   if (loading) {

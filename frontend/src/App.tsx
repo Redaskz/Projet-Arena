@@ -11,6 +11,13 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/tournaments" element={<TournamentsPage />} />
+
+          {/* Le détail contient lui aussi des données réservées aux utilisateurs
+              connectés, donc il doit avoir la même protection que la liste. */}
+          <Route
+            path="/tournaments/:id"
+            element={<TournamentsPage />}
+          />
         </Route>
 
         <Route path="*" element={<Navigate to="/tournaments" replace />} />

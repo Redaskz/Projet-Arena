@@ -138,6 +138,19 @@ nav a.active {
   font-weight: 600;
 }
 
+/*
+  Nom de l'utilisateur connecté : c'est une information, pas un lien. Stylé
+  comme les liens, on croyait à un lien mort. Couleur atténuée (le même gris
+  que les sous-titres de Card.css) et texte plus petit pour le mettre en
+  retrait. C'est un <span> et pas un <a> : il n'a donc ni survol, ni état actif.
+*/
+.navbar__user {
+  padding: 0 8px;
+  color: #a0a3b1;
+  font-size: 0.9rem;
+  cursor: default;
+}
+
 button {
   padding: 8px 14px;
   border: 1px solid #444444;
@@ -162,6 +175,23 @@ select {
   border-radius: 6px;
   background: #1c1c1c;
   color: #ffffff;
+}
+
+/*
+  Champs pré-remplis par Chrome (e-mail mémorisé sur la page de connexion).
+  On ne peut pas simplement écrire background-color : Chrome peint son propre
+  fond clair par-dessus, avec une priorité plus forte que notre CSS. On dessine
+  donc une ombre intérieure très large (1000px) de la même couleur que nos
+  champs : elle recouvre ce fond. -webkit-text-fill-color remplace de la même
+  façon la couleur de texte sombre imposée par Chrome. Les couleurs sont celles
+  de la règle input ci-dessus, pour que le champ pré-rempli soit identique aux autres.
+*/
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1c1c1c inset;
+  -webkit-text-fill-color: #ffffff;
 }
 
 table {

@@ -24,7 +24,9 @@ function Navbar() {
           <NavLink to="/teams">Équipes</NavLink>
           <NavLink to="/matches">Matchs</NavLink>
 
-          <span>{user?.username}</span>
+          {/* Préfixe "Connecté :" : sans lui, "Demo" se lisait comme un lien de
+              plus dans le menu. La classe le met en retrait (voir index.css). */}
+          <span className="navbar__user">Connecté : {user?.username}</span>
 
           <button type="button" onClick={handleLogout}>
             Déconnexion

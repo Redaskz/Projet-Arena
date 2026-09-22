@@ -1,3 +1,10 @@
+/*
+  Styles globaux, appliqués à toutes les pages.
+  Responsive : on écrit d'abord pour tous les écrans, puis on ajuste sous
+  640px (téléphones). 640px est le même seuil que .card-grid dans Card.css :
+  un seul point de rupture pour tout le site, plus simple à expliquer et à
+  tester (360px = mobile, 768px = tablette).
+*/
 :root {
   font-family:
     Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -24,6 +31,12 @@ body {
   background: #111111;
 }
 
+/* Une image (jaquette, logo) ne doit jamais être plus large que son parent,
+   sinon elle pousse toute la page vers la droite sur un petit écran. */
+img {
+  max-width: 100%;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -33,6 +46,22 @@ button,
 input,
 select {
   font: inherit;
+  /* Même protection que pour les images : un champ ou un bouton ne peut pas
+     dépasser la largeur de son conteneur. */
+  max-width: 100%;
+}
+
+/*
+  44px : taille minimale recommandée pour qu'un doigt touche la bonne cible.
+  Règle globale plutôt que page par page : tous les boutons et champs du site
+  en profitent, y compris ceux des pages des autres membres, sans toucher à
+  leurs fichiers. Les cases à cocher et boutons radio sont exclus : les
+  étirer à 44px de haut les déformerait.
+*/
+button,
+select,
+input:not([type="checkbox"]):not([type="radio"]) {
+  min-height: 44px;
 }
 
 button {
@@ -45,10 +74,26 @@ main {
   padding: 32px 0;
 }
 
+/*
+  Filet de sécurité : Layout.tsx fournit déjà le <main> de la page. Si une page
+  ajoute son propre <main>, les marges s'additionnent et la zone utile perd
+  32px de plus (296px au lieu de 328px sur un écran de 360px). Le <main>
+  intérieur prend alors toute la place du premier. La vraie correction reste
+  de remplacer ce <main> par un <section> dans la page concernée.
+*/
+main main {
+  width: 100%;
+  padding: 0;
+}
+
 h1,
 h2,
 h3 {
   margin-top: 0;
+  /* Un titre fait d'un seul long mot (nom de tournoi, de joueur) dépassait
+     de l'écran en mobile. break-word ne coupe le mot que s'il ne tient pas
+     entier sur la ligne : les titres normaux ne changent pas. */
+  overflow-wrap: break-word;
 }
 
 section {
@@ -57,19 +102,40 @@ section {
 
 nav {
   display: flex;
+  /* wrap : sur un téléphone, les 5 liens ne tiennent pas sur une ligne.
+     Sans wrap, le dernier sortait de l'écran et toute la page défilait
+     horizontalement. Avec wrap, ils passent sur une deuxième ligne. */
+  flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
-  padding: 16px 24px;
+  gap: 4px 12px;
+  padding: 8px 24px;
   background: #1a1a1a;
   border-bottom: 1px solid #333333;
 }
 
 nav a {
+  /* inline-flex + min-height : la zone cliquable fait 44px de haut, pas
+     seulement la hauteur du texte (21px), et le texte reste centré. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  /* Bordure transparente réservée : quand le lien devient actif, elle se
+     colore sans décaler le texte d'un pixel. */
+  border-bottom: 2px solid transparent;
   transition: opacity 0.2s ease;
 }
 
 nav a:hover {
   opacity: 0.75;
+}
+
+/* NavLink (React Router) ajoute la classe "active" au lien de la page
+   affichée : l'utilisateur sait où il se trouve, utile quand le menu passe
+   sur deux lignes en mobile. */
+nav a.active {
+  border-bottom-color: #6c5ce7;
+  font-weight: 600;
 }
 
 button {
@@ -110,6 +176,31 @@ td {
   text-align: left;
 }
 
+td {
+  /* Un nom d'équipe sans espace ("xXDarkSasukeXx") ne pouvait pas passer à
+     la ligne et élargissait le tableau au-delà de l'écran. "anywhere"
+     autorise la coupure au milieu du mot, en dernier recours seulement. */
+  overflow-wrap: anywhere;
+}
+
 th {
   background: #1a1a1a;
+}
+
+@media (max-width: 640px) {
+  nav {
+    /* On récupère de la place horizontale pour les liens. */
+    padding: 4px 16px;
+  }
+
+  main {
+    padding: 24px 0;
+  }
+
+  /* Padding réduit : sur un tableau de 7 colonnes, 10px de chaque côté
+     coûtent 140px, presque la moitié d'un écran de 360px. */
+  th,
+  td {
+    padding: 8px 6px;
+  }
 }

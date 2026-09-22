@@ -1,5 +1,6 @@
 /*
-  Styles de Card, dans un fichier à part pour ne pas toucher index.css (Yanis).
+  Styles de Card, dans un fichier à part plutôt que dans index.css : ils sont
+  importés par Card.tsx, donc on les trouve à côté du composant qui les utilise.
   Les couleurs passent par des variables CSS avec une valeur de secours :
   si le thème global définit --color-surface, la carte le suit ; sinon elle
   reste lisible avec les valeurs par défaut.
@@ -56,6 +57,18 @@
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+/*
+  Quand la page passe un composant qui a déjà son propre style (ex.
+  <StatusBadge /> sur les tournois), la pastille violette l'entourait :
+  on voyait une pastille dans une pastille. :has(> *) repère ce cas (le badge
+  contient une balise, pas seulement du texte) et retire l'habillage de Card.
+  Choix le plus simple : aucun changement dans Card.tsx ni dans les pages.
+*/
+.card__badge:has(> *) {
+  padding: 0;
+  background: none;
 }
 
 .card__subtitle {

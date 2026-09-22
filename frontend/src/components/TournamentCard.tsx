@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Card from "./Card";
 import StatusBadge from "./StatusBadge";
 import type { Tournament } from "../types";
@@ -15,20 +16,28 @@ function TournamentCard({
     tournament.status === "upcoming" ? "open" : tournament.status;
 
   return (
-    <Card
-      title={tournament.name}
-      subtitle={gameName}
-      badge={<StatusBadge status={badgeStatus} />}
+    <Link
+      to={`/tournaments/${tournament.id}`}
+      style={{
+        textDecoration: "none",
+        color: "inherit",
+      }}
     >
-      <p>
-        Début :{" "}
-        {new Date(tournament.startDate).toLocaleDateString("fr-FR")}
-      </p>
+      <Card
+        title={tournament.name}
+        subtitle={gameName}
+        badge={<StatusBadge status={badgeStatus} />}
+      >
+        <p>
+          Début :{" "}
+          {new Date(tournament.start_date).toLocaleDateString("fr-FR")}
+        </p>
 
-      <p>
-        Équipes : {tournament.maxTeams} maximum
-      </p>
-    </Card>
+        <p>
+          Équipes : {tournament.max_teams} maximum
+        </p>
+      </Card>
+    </Link>
   );
 }
 

@@ -35,8 +35,8 @@ function TournamentsPage() {
     error: gamesError,
   } = useFetch<Game[]>("/games");
 
-  // TODO: provisoire — les mocks permettent d'afficher la page
-  // tant que le backend n'est pas disponible.
+  // Les mocks permettent de tester l'interface même lorsque le backend
+  // n'est pas disponible pendant le développement frontend.
   const tournaments = USE_MOCKS
     ? getMockTournaments()
     : (apiTournaments ?? []);
@@ -55,9 +55,11 @@ function TournamentsPage() {
 
   const filteredTournaments = useMemo(() => {
     return tournaments.filter((tournament) => {
+      // Les types reproduisent les réponses du backend :
+      // on utilise donc game_id plutôt qu'un nom différent côté frontend.
       const gameMatches =
         selectedGameId === "all" ||
-        tournament.gameId === Number(selectedGameId);
+        tournament.game_id === Number(selectedGameId);
 
       const statusMatches =
         selectedStatus === "all" ||
@@ -99,8 +101,10 @@ function TournamentsPage() {
           }}
         >
           {filteredTournaments.map((tournament) => {
+            // On retrouve le jeu grâce à l'identifiant fourni par le backend
+            // afin d'afficher son nom plutôt que son identifiant numérique.
             const game = games.find(
-              (item) => item.id === tournament.gameId,
+              (item) => item.id === tournament.game_id,
             );
 
             return (

@@ -1,4 +1,5 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 
 interface CommentFormProps {
   onSubmit: (content: string) => Promise<void>;
@@ -32,7 +33,9 @@ function CommentForm({ onSubmit }: CommentFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <label htmlFor="comment-content">Ajouter un commentaire</label>
+      <label htmlFor="comment-content">
+        Ajouter un commentaire
+      </label>
 
       <textarea
         id="comment-content"

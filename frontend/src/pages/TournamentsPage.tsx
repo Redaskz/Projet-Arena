@@ -1,18 +1,16 @@
 import { useMemo } from "react";
+import Card from "../components/Card";
 import ErrorMessage from "../components/ErrorMessage";
 import Loader from "../components/Loader";
 import TournamentCard from "../components/TournamentCard";
 import TournamentFilters from "../components/TournamentFilters";
-import { useFetch } from "../hooks/useFetch";
 import useLocalStorage from "../hooks/useLocalStorage";
-import {
-  getMockGames,
-  getMockTournaments,
-  USE_MOCKS,
-} from "../mocks";
-import type { Game, Tournament } from "../types";
+import { getMockGames, getMockTournaments, USE_MOCKS } from "../mocks";
+import type { Tournament } from "../types";
 
-function TournamentsPage() {
+interface TournamentsPageProps {}
+
+function TournamentsPage({}: TournamentsPageProps) {
   const [selectedGameId, setSelectedGameId] = useLocalStorage<string>(
     "tournaments.game",
     "all",
@@ -23,38 +21,22 @@ function TournamentsPage() {
     "all",
   );
 
-  const {
-    data: apiTournaments,
-    loading: apiLoading,
-    error: apiError,
-  } = useFetch<Tournament[]>("/tournaments");
+  // Le chargement est actuellement géré avec les données mockées.
+  // On garde ces variables pour conserver la même structure lorsque l'API
+  // remplacera les mocks.
+  const loading = false;
+  const error: string | null = null;
 
-  const {
-    data: apiGames,
-    loading: gamesLoading,
-    error: gamesError,
-  } = useFetch<Game[]>("/games");
-
-  // TODO: provisoire — les mocks permettent d'afficher la page
-  // tant que le backend n'est pas disponible.
-  const tournaments = USE_MOCKS
+  const tournaments: Tournament[] = USE_MOCKS
     ? getMockTournaments()
-    : (apiTournaments ?? []);
+    : [];
 
-  const games = USE_MOCKS
-    ? getMockGames()
-    : (apiGames ?? []);
-
-  const loading = USE_MOCKS
-    ? false
-    : apiLoading || gamesLoading;
-
-  const error = USE_MOCKS
-    ? null
-    : apiError ?? gamesError;
+  const games = USE_MOCKS ? getMockGames() : [];
 
   const filteredTournaments = useMemo(() => {
-    return tournaments.filter((tournament) => {
+    return tournaments.filter((tournament: Tournament) => {
+      // Les types du projet reproduisent exactement les réponses du backend,
+      // donc les identifiants doivent rester en snake_case.
       const gameMatches =
         selectedGameId === "all" ||
         tournament.gameId === Number(selectedGameId);
@@ -98,7 +80,9 @@ function TournamentsPage() {
             gap: "1rem",
           }}
         >
-          {filteredTournaments.map((tournament) => {
+          {filteredTournaments.map((tournament: Tournament) => {
+            // On cherche le nom du jeu à partir de l'identifiant renvoyé
+            // par le backend plutôt que d'afficher uniquement son ID.
             const game = games.find(
               (item) => item.id === tournament.gameId,
             );

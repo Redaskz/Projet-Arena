@@ -40,9 +40,14 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+
+  // isLoading empêche ProtectedRoute de considérer l'utilisateur comme
+  // déconnecté pendant que la session sauvegardée est relue.
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // La session est conservée dans localStorage afin qu'un F5 ne
+    // déconnecte pas l'utilisateur alors que sa session existe toujours.
     const storedAuth = localStorage.getItem(STORAGE_KEY);
 
     if (!storedAuth) {
@@ -59,6 +64,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(auth.user);
       setToken(auth.token);
     } catch {
+      // Une donnée invalide ne doit pas bloquer toute l'application :
+      // on repart donc d'une session vide.
       localStorage.removeItem(STORAGE_KEY);
     } finally {
       setIsLoading(false);
@@ -66,6 +73,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   async function login(email: string, password: string): Promise<void> {
+    // TODO: provisoire — la connexion utilise actuellement des identifiants
+    // simulés en attendant le branchement définitif sur l'API backend.
     if (email !== "demo@arena.fr" || password !== "arena123") {
       throw new Error("Identifiants invalides.");
     }
@@ -78,12 +87,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(authData.user);
     setToken(authData.token);
 
+    // On sauvegarde la session pour qu'un rafraîchissement de la page
+    // conserve la connexion de l'utilisateur.
     localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
   }
 
   function logout(): void {
     setUser(null);
     setToken(null);
+
+    // Supprimer la session évite qu'un autre utilisateur récupère
+    // accidentellement la session précédente sur le même navigateur.
     localStorage.removeItem(STORAGE_KEY);
   }
 

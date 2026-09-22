@@ -1,9 +1,10 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-interface NavbarProps {}
-
-function Navbar({}: NavbarProps) {
+// Pas d'interface NavbarProps : notre convention (une interface XProps par
+// composant) ne vaut que si le composant reçoit des props. Une interface vide
+// n'apporte aucun typage et ESLint la rejette.
+function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 

@@ -65,6 +65,23 @@ const statusStyles: Record<Status, BadgeStyle> = {
 },
 };
 
+// Libellés français affichés dans le badge : le backend envoie les statuts en
+// anglais ("open", "ongoing"...), alors que toute l'interface est en français.
+// Même principe que GENRE_LABELS dans api/games.ts : avec Record<Status, string>,
+// TypeScript refuse de compiler si un statut du type Status n'a pas de libellé.
+const STATUS_LABELS: Record<Status, string> = {
+  draft: "Brouillon",
+  open: "Ouvert",
+  upcoming: "À venir",
+  ongoing: "En cours",
+  finished: "Terminé",
+  pending: "En attente",
+  accepted: "Acceptée",
+  rejected: "Refusée",
+  scheduled: "À jouer",
+  played: "Joué",
+};
+
 const baseStyle: CSSProperties = {
   display: "inline-block",
   padding: "0.25rem 0.65rem",
@@ -84,7 +101,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
         ...statusStyle,
       }}
     >
-      {status}
+      {STATUS_LABELS[status]}
     </span>
   );
 }

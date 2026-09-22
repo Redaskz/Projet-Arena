@@ -18,9 +18,9 @@ interface ScoreForm {
   scoreB: string;
 }
 
-interface MatchesPageProps {}
-
-function MatchesPage({}: MatchesPageProps) {
+// Pas d'interface de props : la page est affichée par le routeur sans aucune
+// prop, comme GamesPage et TeamsPage. Une interface vide faisait échouer le lint.
+function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>(getMockMatches);
   const [teams] = useState<Team[]>(getMockTeams);
 

@@ -8,14 +8,21 @@ Aucune règle métier et aucune requête ici : les requêtes vont dans
 
 import enum
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, Enum, Float, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 # `Base` est la classe de base déclarative définie par Victor dans core/database.py.
 # Tout modèle qui en hérite est automatiquement enregistré dans Base.metadata,
 # ce qui permet à create_all() de créer la table correspondante au démarrage.
 from app.core.database import Base
+
+# Import réservé aux annotations de type : la relation désigne la classe par
+# son nom ("Tournament"), résolu par SQLAlchemy. Un import réel serait
+# circulaire, tournament.py pointant lui aussi vers Game.
+if TYPE_CHECKING:
+    from app.models.tournament import Tournament
 
 
 class GameGenre(str, enum.Enum):
@@ -104,3 +111,11 @@ class Game(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+    # --- Relations ORM -------------------------------------------------------
+    # Pendant de Tournament.game. Aucune colonne n'est ajoutée à la table games :
+    # la relation repose entièrement sur tournaments.game_id.
+    # Pas de cascade : supprimer un jeu qui a encore des tournois doit échouer
+    # (tournaments.game_id est NOT NULL) plutôt qu'effacer silencieusement des
+    # tournois et tous leurs matchs.
+    tournaments: Mapped[list["Tournament"]] = relationship(back_populates="game")

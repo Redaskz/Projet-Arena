@@ -7,11 +7,18 @@ Les scores restent null tant que le match n'est pas joué.
 
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base
+from app.core.database import Base
+
+# Imports réservés aux annotations de type, pour éviter un import circulaire
+# avec tournament.py qui référence lui-même Match.
+if TYPE_CHECKING:
+    from app.models.team import Team
+    from app.models.tournament import Tournament
 
 
 class MatchStatus(str, enum.Enum):
@@ -81,3 +88,19 @@ class Match(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+    # --- Relations ORM -------------------------------------------------------
+    # Pendant de Tournament.matches : `back_populates` garde les deux côtés
+    # synchronisés dans la session.
+    tournament: Mapped["Tournament"] = relationship(back_populates="matches")
+
+    # `foreign_keys=` est OBLIGATOIRE ici : la table matches possède DEUX clés
+    # étrangères vers teams.id (team_a_id et team_b_id). Sans précision,
+    # SQLAlchemy ne sait pas laquelle utiliser pour chaque relation et lève une
+    # AmbiguousForeignKeysError au premier chargement des modèles, ce qui
+    # empêcherait le serveur de démarrer.
+    # Pas de `back_populates` côté Team : une équipe aurait alors deux listes
+    # de matchs (à domicile / à l'extérieur), peu utiles séparément. Les matchs
+    # d'une équipe se récupèrent par une requête dans le repository.
+    team_a: Mapped["Team"] = relationship(foreign_keys=[team_a_id])
+    team_b: Mapped["Team"] = relationship(foreign_keys=[team_b_id])

@@ -8,7 +8,7 @@ au service. Il ne contient donc pas de règles métier.
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.match import MatchCreate, MatchRead, MatchUpdate
 from app.services import match as match_service
 

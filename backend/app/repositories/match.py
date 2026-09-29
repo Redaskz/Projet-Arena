@@ -9,7 +9,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.match import Match
-from app.models.tournament import Tournament
 
 
 def list_matches(
@@ -69,6 +68,29 @@ def create_match(
     db.refresh(match)
 
     return match
+
+
+def create_matches(
+    db: Session,
+    data_list: list[dict],
+) -> list[Match]:
+    """
+    Crée plusieurs matchs en une seule transaction.
+
+    Utilisé par la génération de calendrier : un seul commit pour tous
+    les matchs garantit qu'un échec en cours de route ne laisse pas un
+    calendrier à moitié écrit en base (tout ou rien).
+    """
+
+    matches = [Match(**data) for data in data_list]
+
+    db.add_all(matches)
+    db.commit()
+
+    for match in matches:
+        db.refresh(match)
+
+    return matches
 
 
 def update_match(

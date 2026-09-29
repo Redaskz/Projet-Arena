@@ -51,6 +51,24 @@ def get_tournament_by_id(
     return db.get(Tournament, tournament_id)
 
 
+def get_tournament_by_name(
+    db: Session,
+    name: str,
+) -> Tournament | None:
+    """
+    Récupère le tournoi portant exactement ce nom, ou None.
+
+    Sert à la règle d'unicité du nom appliquée par le service : le
+    repository cherche, c'est le service qui décide que c'est un conflit.
+    Comparaison stricte (==) pour rester aligné sur l'index unique de la
+    base, lui aussi sensible à la casse.
+    """
+
+    query = select(Tournament).where(Tournament.name == name)
+
+    return db.execute(query).scalar_one_or_none()
+
+
 def create_tournament(
     db: Session,
     data: dict,

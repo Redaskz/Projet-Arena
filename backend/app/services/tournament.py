@@ -42,6 +42,37 @@ def _get_tournament_or_404(
     return tournament
 
 
+def _ensure_name_is_available(
+    db: Session,
+    name: str,
+    current_tournament_id: int | None = None,
+) -> None:
+    """
+    Vérifie qu'aucun autre tournoi ne porte déjà ce nom, sinon lève une 409.
+
+    Même règle que pour les équipes : deux tournois homonymes rendraient
+    le calendrier et le classement ambigus pour les joueurs.
+
+    `current_tournament_id` sert au PATCH : un tournoi qui renvoie son
+    propre nom se retrouve forcément en base, ce n'est pas un conflit.
+    """
+
+    existing = tournament_repository.get_tournament_by_name(
+        db,
+        name,
+    )
+
+    if existing is None or existing.id == current_tournament_id:
+        return
+
+    # 409 et non 400 : la requête est valide, c'est l'état actuel de la
+    # base (nom déjà pris) qui l'empêche d'aboutir.
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail="Ce nom de tournoi est déjà pris.",
+    )
+
+
 def list_tournaments(
     db: Session,
     game_id: int | None = None,
@@ -84,6 +115,13 @@ def create_tournament(
     simple avant de le transmettre au repository.
     """
 
+    # Vérifié avant l'INSERT : sans cela, l'index unique ferait échouer la
+    # requête en 500 au lieu d'un 409 explicite.
+    _ensure_name_is_available(
+        db,
+        payload.name,
+    )
+
     data = payload.model_dump()
 
     return tournament_repository.create_tournament(
@@ -115,6 +153,15 @@ def update_tournament(
 
     if not data:
         return tournament
+
+    # `in data` : on ne revérifie l'unicité que si le client renomme
+    # réellement le tournoi.
+    if "name" in data:
+        _ensure_name_is_available(
+            db,
+            data["name"],
+            current_tournament_id=tournament.id,
+        )
 
     return tournament_repository.update_tournament(
         db,

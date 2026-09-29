@@ -12,7 +12,13 @@ from sqlalchemy.orm import Session
 
 from app.models.match import MatchStatus
 from app.repositories import match as match_repository
+from app.repositories import tournament as tournament_repository
 from app.schemas.match import MatchCreate, MatchUpdate
+
+# On passe par le repository des tournois et non par services/tournament.py :
+# un service qui en importe un autre finit tôt ou tard en import circulaire
+# (le jour où le service des tournois aura besoin des matchs). Le repository,
+# lui, n'importe aucun service.
 
 
 def _get_match_or_404(
@@ -76,6 +82,22 @@ def create_match(
     La validation des données est réalisée par Pydantic avant
     d'arriver dans le service.
     """
+
+    # Sans cette vérification, PostgreSQL refuserait l'INSERT au nom de la
+    # clé étrangère et le client recevrait une 500 illisible.
+    if tournament_repository.get_tournament_by_id(db, payload.tournament_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tournoi introuvable.",
+        )
+
+    # 400 et non 409 : ce n'est pas l'état de la base qui bloque, c'est la
+    # requête elle-même qui est incohérente.
+    if payload.team_a_id == payload.team_b_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Une équipe ne peut pas s'affronter elle-même.",
+        )
 
     data = payload.model_dump()
 

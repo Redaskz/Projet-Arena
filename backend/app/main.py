@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 
-from app.core.database import Base, SessionLocal, engine
+from app.core.database import Base, engine
 
 # Un modèle n'est connu de Base.metadata que si son module a été importé :
 # chaque ressource doit donc importer son modèle ici pour que create_all crée
@@ -12,6 +11,7 @@ from app.core.database import Base, SessionLocal, engine
 from app.models import game, match, player, team, tournament, user  # noqa: F401
 from app.routers import auth as auth_router
 from app.routers import game as game_router
+from app.routers import health as health_router
 from app.routers import match as match_router
 from app.routers import player as player_router
 from app.routers import team as team_router
@@ -58,14 +58,5 @@ app.include_router(player_router.router)
 # tournoi, on garde donc l'ordre de lecture du modèle de données dans /docs.
 app.include_router(tournament_router.router)
 app.include_router(match_router.router)
-
-
-@app.get("/health")
-def health_check():
-    db = SessionLocal()
-
-    try:
-        db.execute(text("SELECT 1"))
-        return {"status": "ok", "database": "connected"}
-    finally:
-        db.close()
+# En dernier : c'est une route technique, pas une ressource métier.
+app.include_router(health_router.router)

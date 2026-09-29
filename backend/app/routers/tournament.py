@@ -5,18 +5,18 @@ Le router reçoit les requêtes HTTP et délègue la logique métier
 au service. Il ne contient donc pas de règles métier.
 """
 
-from datetime import date
-
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.tournament import TournamentStatus
+from app.schemas.match import MatchRead
 from app.schemas.tournament import (
     TournamentCreate,
     TournamentRead,
     TournamentUpdate,
 )
+from app.services import match as match_service
 from app.services import tournament as tournament_service
 
 
@@ -52,6 +52,27 @@ def list_tournaments(
         db,
         game_id=game_id,
         tournament_status=tournament_status,
+    )
+
+
+@router.get(
+    "/{tournament_id}/matches",
+    response_model=list[MatchRead],
+)
+def list_tournament_matches(
+    tournament_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Retourne tous les matchs appartenant à un tournoi.
+
+    La récupération est déléguée au service des matchs afin de conserver
+    la séparation des responsabilités entre les différentes couches.
+    """
+
+    return match_service.list_matches(
+        db,
+        tournament_id=tournament_id,
     )
 
 

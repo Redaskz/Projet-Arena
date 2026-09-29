@@ -7,8 +7,13 @@ from app.core.database import Base, SessionLocal, engine
 # Un modèle n'est connu de Base.metadata que si son module a été importé :
 # chaque ressource doit donc importer son modèle ici pour que create_all crée
 # sa table. Chaque membre ajoute sa ligne.
-from app.models import user  # noqa: F401
+# `user` doit être présent en même temps que `team` : teams.captain_id est une
+# clé étrangère vers users.id, que SQLAlchemy doit pouvoir résoudre.
+from app.models import game, player, team, user  # noqa: F401
 from app.routers import auth as auth_router
+from app.routers import game as game_router
+from app.routers import player as player_router
+from app.routers import team as team_router
 from app.routers import user as user_router
 
 # Crée les tables manquantes au démarrage (sans toucher aux tables existantes).
@@ -31,8 +36,22 @@ app.add_middleware(
 )
 
 
+# Chaque ressource est branchée sur l'application par un include_router.
+# Le préfixe (/games) et le tag (Games) sont déjà portés par l'APIRouter
+# lui-même : on ne les répète pas ici, sinon le préfixe serait appliqué deux
+# fois et l'URL deviendrait /games/games.
+# Sans cette ligne, le fichier routers/game.py existerait sans qu'aucune de ses
+# routes soit servie ni visible dans /docs.
+# L'ordre des include_router ici détermine l'ordre des sections dans /docs, et
+# rien d'autre : le routage lui-même repose sur les préfixes, qui ne se
+# chevauchent pas. On commence par l'authentification, nécessaire pour utiliser
+# les autres routes, puis on suit l'ordre de lecture du modèle de données :
+# un jeu, puis les équipes qui s'y inscrivent, puis les joueurs de ces équipes.
 app.include_router(auth_router.router)
 app.include_router(user_router.router)
+app.include_router(game_router.router)
+app.include_router(team_router.router)
+app.include_router(player_router.router)
 
 
 @app.get("/health")
@@ -44,4 +63,3 @@ def health_check():
         return {"status": "ok", "database": "connected"}
     finally:
         db.close()
-        

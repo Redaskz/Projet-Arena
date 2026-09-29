@@ -8,15 +8,18 @@ au service. Il ne contient donc pas de règles métier.
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.core.database import get_db
 from app.models.tournament import TournamentStatus
 from app.schemas.match import MatchRead
+from app.schemas.standing import StandingRead
 from app.schemas.tournament import (
     TournamentCreate,
     TournamentRead,
     TournamentUpdate,
 )
 from app.services import match as match_service
+from app.services import schedule as schedule_service
+from app.services import standings as standings_service
 from app.services import tournament as tournament_service
 
 
@@ -73,6 +76,48 @@ def list_tournament_matches(
     return match_service.list_matches(
         db,
         tournament_id=tournament_id,
+    )
+
+
+@router.post(
+    "/{tournament_id}/schedule",
+    response_model=list[MatchRead],
+    status_code=status.HTTP_201_CREATED,
+)
+def generate_tournament_schedule(
+    tournament_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Génère le calendrier complet du tournoi (chacun contre chacun).
+
+    POST et 201 : l'appel crée des ressources, les matchs. Toutes les
+    vérifications (tournoi existant, nombre d'équipes, calendrier déjà
+    présent) sont faites par le service.
+    """
+
+    return schedule_service.generate_schedule(
+        db,
+        tournament_id,
+    )
+
+
+@router.get(
+    "/{tournament_id}/standings",
+    response_model=list[StandingRead],
+)
+def get_tournament_standings(
+    tournament_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Retourne le classement du tournoi, recalculé à chaque appel à partir
+    des matchs joués.
+    """
+
+    return standings_service.compute_standings(
+        db,
+        tournament_id,
     )
 
 

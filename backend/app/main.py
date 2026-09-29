@@ -9,11 +9,13 @@ from app.core.database import Base, SessionLocal, engine
 # sa table. Chaque membre ajoute sa ligne.
 # `user` doit être présent en même temps que `team` : teams.captain_id est une
 # clé étrangère vers users.id, que SQLAlchemy doit pouvoir résoudre.
-from app.models import game, player, team, user  # noqa: F401
+from app.models import game, match, player, team, tournament, user  # noqa: F401
 from app.routers import auth as auth_router
 from app.routers import game as game_router
+from app.routers import match as match_router
 from app.routers import player as player_router
 from app.routers import team as team_router
+from app.routers import tournament as tournament_router
 from app.routers import user as user_router
 
 # Crée les tables manquantes au démarrage (sans toucher aux tables existantes).
@@ -52,6 +54,10 @@ app.include_router(user_router.router)
 app.include_router(game_router.router)
 app.include_router(team_router.router)
 app.include_router(player_router.router)
+# Les tournois avant les matchs : un match n'existe qu'à l'intérieur d'un
+# tournoi, on garde donc l'ordre de lecture du modèle de données dans /docs.
+app.include_router(tournament_router.router)
+app.include_router(match_router.router)
 
 
 @app.get("/health")

@@ -28,8 +28,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.game import GameGenre
+from app.models.user import User
 from app.schemas.game import GameCreate, GameRead, GameUpdate
 from app.services import game as game_service
+from app.services.auth import get_current_admin, get_current_user
 
 # Le module du service est importé sous le nom `game_service`, comme le service
 # importe son repository sous le nom `game_repository`. À la lecture d'une route,
@@ -97,11 +99,20 @@ def get_game(game_id: int, db: Session = Depends(get_db)):
     return game_service.get_game(db, game_id)
 
 
+# SÉCURITÉ : consulter le catalogue est ouvert à tous, c'est la vitrine de la
+# plateforme. Le modifier engage les données de tout le monde : l'écriture
+# exige donc un compte, et créer ou supprimer un jeu, donnée de référence du
+# catalogue, est réservé aux administrateurs.
+
 # `status_code=201` (CREATED) et non le 200 par défaut : la requête n'a pas
 # seulement réussi, elle a créé une ressource. On passe par `status.HTTP_...`
 # plutôt que par le nombre nu, car le nom est explicite à la lecture.
 @router.post("", response_model=GameRead, status_code=status.HTTP_201_CREATED)
-def create_game(payload: GameCreate, db: Session = Depends(get_db)):
+def create_game(
+    payload: GameCreate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
     """Crée un jeu dans le catalogue.
 
     Le jeu est ensuite enrichi automatiquement par l'API externe RAWG
@@ -117,7 +128,12 @@ def create_game(payload: GameCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{game_id}", response_model=GameRead)
-def update_game(game_id: int, payload: GameUpdate, db: Session = Depends(get_db)):
+def update_game(
+    game_id: int,
+    payload: GameUpdate,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     """Modifie partiellement un jeu existant.
 
     Seuls les champs présents dans le corps de la requête sont modifiés, les
@@ -133,7 +149,11 @@ def update_game(game_id: int, payload: GameUpdate, db: Session = Depends(get_db)
 # sans corps, et l'absence de `response_model` est donc volontaire. Un 204
 # accompagné d'un corps JSON serait une réponse HTTP invalide.
 @router.delete("/{game_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_game(game_id: int, db: Session = Depends(get_db)):
+def delete_game(
+    game_id: int,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(get_current_admin),
+):
     """Supprime un jeu du catalogue.
 
     Ne renvoie aucun corps de réponse. Répond 404 si le jeu n'existe pas.

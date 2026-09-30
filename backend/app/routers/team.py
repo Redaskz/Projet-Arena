@@ -16,9 +16,11 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.user import User
 from app.schemas.player import PlayerRead
 from app.schemas.team import TeamCreate, TeamRead, TeamUpdate
 from app.services import team as team_service
+from app.services.auth import get_current_user
 
 # Fichier au singulier (team.py), préfixe d'URL au pluriel (/teams) :
 # une collection contient plusieurs éléments.
@@ -80,10 +82,18 @@ def list_team_players(team_id: int, db: Session = Depends(get_db)):
     return team_service.list_team_players(db, team_id)
 
 
+# SÉCURITÉ : les équipes et leurs effectifs se consultent sans compte, comme
+# sur toute plateforme de tournois. Les créer, les modifier ou les supprimer
+# change des données partagées : l'écriture exige donc un utilisateur connecté.
+
 # `status_code=201` (CREATED) et non le 200 par défaut : la requête n'a pas
 # seulement réussi, elle a créé une ressource.
 @router.post("", response_model=TeamRead, status_code=status.HTTP_201_CREATED)
-def create_team(payload: TeamCreate, db: Session = Depends(get_db)):
+def create_team(
+    payload: TeamCreate,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     """Crée une équipe.
 
     Deux équipes ne peuvent pas porter le même nom : la route répond 409 si le
@@ -95,7 +105,12 @@ def create_team(payload: TeamCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{team_id}", response_model=TeamRead)
-def update_team(team_id: int, payload: TeamUpdate, db: Session = Depends(get_db)):
+def update_team(
+    team_id: int,
+    payload: TeamUpdate,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     """Modifie partiellement une équipe existante.
 
     Seuls les champs présents dans le corps de la requête sont modifiés. Répond
@@ -109,7 +124,11 @@ def update_team(team_id: int, payload: TeamUpdate, db: Session = Depends(get_db)
 # `response_model` est donc volontaire, car un 204 accompagné d'un corps JSON
 # serait une réponse HTTP invalide.
 @router.delete("/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_team(team_id: int, db: Session = Depends(get_db)):
+def delete_team(
+    team_id: int,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     """Supprime une équipe, ainsi que ses joueurs.
 
     Ne renvoie aucun corps de réponse. Répond 404 si l'équipe n'existe pas.

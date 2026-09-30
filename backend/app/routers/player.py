@@ -11,8 +11,10 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.user import User
 from app.schemas.player import PlayerCreate, PlayerRead, PlayerUpdate
 from app.services import player as player_service
+from app.services.auth import get_current_user
 
 # Fichier au singulier (player.py), préfixe d'URL au pluriel (/players).
 router = APIRouter(prefix="/players", tags=["Players"])
@@ -57,8 +59,15 @@ def get_player(player_id: int, db: Session = Depends(get_db)):
     return player_service.get_player(db, player_id)
 
 
+# SÉCURITÉ : les fiches des joueurs sont publiques, on consulte un effectif sans
+# compte. Créer, modifier ou transférer un joueur altère les équipes de tous :
+# l'écriture exige donc un utilisateur connecté.
 @router.post("", response_model=PlayerRead, status_code=status.HTTP_201_CREATED)
-def create_player(payload: PlayerCreate, db: Session = Depends(get_db)):
+def create_player(
+    payload: PlayerCreate,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     """Crée un joueur et le rattache à une équipe.
 
     Répond 404 si l'équipe visée n'existe pas.
@@ -67,7 +76,12 @@ def create_player(payload: PlayerCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{player_id}", response_model=PlayerRead)
-def update_player(player_id: int, payload: PlayerUpdate, db: Session = Depends(get_db)):
+def update_player(
+    player_id: int,
+    payload: PlayerUpdate,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     """Modifie partiellement un joueur existant.
 
     Seuls les champs présents dans le corps de la requête sont modifiés.
@@ -78,7 +92,11 @@ def update_player(player_id: int, payload: PlayerUpdate, db: Session = Depends(g
 
 
 @router.delete("/{player_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_player(player_id: int, db: Session = Depends(get_db)):
+def delete_player(
+    player_id: int,
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
     """Supprime un joueur.
 
     Ne renvoie aucun corps de réponse. Répond 404 si le joueur n'existe pas.

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.tournament import TournamentStatus
+from app.models.user import User
 from app.schemas.match import MatchRead
 from app.schemas.standing import StandingRead
 from app.schemas.tournament import (
@@ -21,6 +22,7 @@ from app.services import match as match_service
 from app.services import schedule as schedule_service
 from app.services import standings as standings_service
 from app.services import tournament as tournament_service
+from app.services.auth import get_current_user
 
 
 router = APIRouter(
@@ -79,6 +81,10 @@ def list_tournament_matches(
     )
 
 
+# SÉCURITÉ : tournois, calendrier et classement se consultent sans compte, c'est
+# le cœur d'une plateforme de tournois. Générer le calendrier, créer, modifier
+# ou supprimer un tournoi écrit en base : ces routes (ici et plus bas) exigent
+# donc un utilisateur connecté.
 @router.post(
     "/{tournament_id}/schedule",
     response_model=list[MatchRead],
@@ -87,6 +93,7 @@ def list_tournament_matches(
 def generate_tournament_schedule(
     tournament_id: int,
     db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     """
     Génère le calendrier complet du tournoi (chacun contre chacun).
@@ -145,6 +152,7 @@ def get_tournament(
 def create_tournament(
     payload: TournamentCreate,
     db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     """Crée un nouveau tournoi."""
 
@@ -162,6 +170,7 @@ def update_tournament(
     tournament_id: int,
     payload: TournamentUpdate,
     db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     """Met à jour les champs envoyés d'un tournoi."""
 
@@ -179,6 +188,7 @@ def update_tournament(
 def delete_tournament(
     tournament_id: int,
     db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ) -> None:
     """Supprime un tournoi."""
 

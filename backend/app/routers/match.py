@@ -9,8 +9,10 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.models.user import User
 from app.schemas.match import MatchCreate, MatchRead, MatchUpdate
 from app.services import match as match_service
+from app.services.auth import get_current_user
 
 
 router = APIRouter(
@@ -51,6 +53,9 @@ def get_match(
     )
 
 
+# SÉCURITÉ : les matchs et leurs scores sont publics, le calendrier se consulte
+# sans compte. Créer un match, saisir un score ou le supprimer fausserait le
+# classement : l'écriture exige donc un utilisateur connecté.
 @router.post(
     "",
     response_model=MatchRead,
@@ -59,6 +64,7 @@ def get_match(
 def create_match(
     payload: MatchCreate,
     db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     """Crée un nouveau match."""
 
@@ -76,6 +82,7 @@ def update_match(
     match_id: int,
     payload: MatchUpdate,
     db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ):
     """
     Met à jour un match.
@@ -98,6 +105,7 @@ def update_match(
 def delete_match(
     match_id: int,
     db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
 ) -> None:
     """Supprime un match."""
 

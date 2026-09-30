@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import type { Game } from '../types';
 import { createTeam } from '../api/teams';
+import { useAuth } from '../hooks/useAuth';
 import ErrorMessage from './ErrorMessage';
 import FormField from './FormField';
 
@@ -47,7 +49,24 @@ function validateTeamForm(form: TeamForm): TeamFormErrors {
   return errors;
 }
 
+function getSubmitErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    // 401 : le jeton a expiré entre-temps. client.ts a déjà vidé la session
+    // et redirigé vers /login, ce message n'est donc visible qu'un instant.
+    if (error.status === 401) {
+      return 'Votre session a expiré. Reconnectez-vous pour créer une équipe.';
+    }
+    if (error.status === 403) {
+      return "Vous n'avez pas les droits nécessaires pour créer une équipe.";
+    }
+    return error.message;
+  }
+
+  return "Impossible de créer l'équipe.";
+}
+
 function TeamCreateForm({ games, onCreated }: TeamCreateFormProps) {
+  const { user } = useAuth();
   const [form, setForm] = useState<TeamForm>(EMPTY_FORM);
   const [errors, setErrors] = useState<TeamFormErrors>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -74,12 +93,20 @@ function TeamCreateForm({ games, onCreated }: TeamCreateFormProps) {
       return;
     }
 
+    // Le formulaire n'est affiché qu'aux utilisateurs connectés, mais la
+    // session peut avoir été vidée entre l'affichage et l'envoi.
+    if (!user) {
+      setSubmitError('Vous devez être connecté pour créer une équipe.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await createTeam({
         name: form.name.trim(),
         tag: form.tag.trim(),
         game_id: Number(form.game_id),
+        captain_id: user.id,
       });
       setForm(EMPTY_FORM);
       onCreated();
@@ -88,15 +115,27 @@ function TeamCreateForm({ games, onCreated }: TeamCreateFormProps) {
         // 409 Conflict = nom déjà pris. On range le message de l'API dans les
         // erreurs du champ "name" : il s'affiche donc sous ce champ précis.
         setErrors({ name: requestError.message });
-      } else if (requestError instanceof Error) {
-        setSubmitError(requestError.message);
       } else {
-        setSubmitError("Impossible de créer l'équipe.");
+        setSubmitError(getSubmitErrorMessage(requestError));
       }
     } finally {
       // finally : le bouton se réactive dans tous les cas, succès comme échec.
       setSubmitting(false);
     }
+  }
+
+  // POST /teams exige un jeton : plutôt que de laisser un visiteur remplir le
+  // formulaire pour recevoir un 401, on lui dit tout de suite quoi faire.
+  if (!user) {
+    return (
+      <section>
+        <h2>Créer une équipe</h2>
+        <p>
+          Vous devez être connecté pour créer une équipe.{' '}
+          <Link to="/login">Se connecter</Link>
+        </p>
+      </section>
+    );
   }
 
   return (

@@ -1,16 +1,16 @@
 import type { CSSProperties } from "react";
+import type {
+  MatchStatus,
+  RegistrationStatus,
+  TournamentStatus,
+} from "../types";
 
-type Status =
-  | "draft"
-  | "open"
-  | "upcoming"
-  | "ongoing"
-  | "finished"
-  | "pending"
-  | "accepted"
-  | "rejected"
-  | "scheduled"
-  | "played";
+// Union construite à partir des enums de l'API plutôt que recopiée à la main :
+// si le backend ajoute un statut et qu'on le reporte dans types/index.ts, les
+// deux Record ci-dessous refusent de compiler tant qu'il n'a ni style ni libellé.
+// À l'inverse, une valeur qui n'existe pas côté API ("open", "draft") n'est plus
+// acceptée nulle part.
+type Status = TournamentStatus | MatchStatus | RegistrationStatus;
 
 interface StatusBadgeProps {
   status: Status;
@@ -22,13 +22,9 @@ interface BadgeStyle {
 }
 
 const statusStyles: Record<Status, BadgeStyle> = {
-  draft: {
-    backgroundColor: "#e5e7eb",
-    color: "#374151",
-  },
-  open: {
-    backgroundColor: "#dcfce7",
-    color: "#166534",
+  upcoming: {
+    backgroundColor: "#fef3c7",
+    color: "#92400e",
   },
   ongoing: {
     backgroundColor: "#dbeafe",
@@ -37,6 +33,14 @@ const statusStyles: Record<Status, BadgeStyle> = {
   finished: {
     backgroundColor: "#ede9fe",
     color: "#6d28d9",
+  },
+  scheduled: {
+    backgroundColor: "#dbeafe",
+    color: "#1d4ed8",
+  },
+  played: {
+    backgroundColor: "#e5e7eb",
+    color: "#374151",
   },
   pending: {
     backgroundColor: "#fef3c7",
@@ -50,36 +54,21 @@ const statusStyles: Record<Status, BadgeStyle> = {
     backgroundColor: "#fee2e2",
     color: "#b91c1c",
   },
-  scheduled: {
-    backgroundColor: "#dbeafe",
-    color: "#1d4ed8",
-  },
-  played: {
-    backgroundColor: "#e5e7eb",
-    color: "#374151",
-  },
-
-  upcoming: {
-  backgroundColor: "#fef3c7",
-  color: "#92400e",
-},
 };
 
 // Libellés français affichés dans le badge : le backend envoie les statuts en
-// anglais ("open", "ongoing"...), alors que toute l'interface est en français.
+// anglais, alors que toute l'interface est en français.
 // Même principe que GENRE_LABELS dans api/games.ts : avec Record<Status, string>,
 // TypeScript refuse de compiler si un statut du type Status n'a pas de libellé.
 const STATUS_LABELS: Record<Status, string> = {
-  draft: "Brouillon",
-  open: "Ouvert",
   upcoming: "À venir",
   ongoing: "En cours",
   finished: "Terminé",
+  scheduled: "À jouer",
+  played: "Joué",
   pending: "En attente",
   accepted: "Acceptée",
   rejected: "Refusée",
-  scheduled: "À jouer",
-  played: "Joué",
 };
 
 const baseStyle: CSSProperties = {

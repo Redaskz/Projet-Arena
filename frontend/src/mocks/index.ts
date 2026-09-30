@@ -1,14 +1,15 @@
-// TODO: provisoire — tout ce dossier disparaît quand le backend servira
-// GET /games, GET /teams, POST /teams et GET /tournaments. Il suffira alors de
-// passer USE_MOCKS à false : les pages repartiront sur les vraies requêtes.
+// Solution de repli : le frontend est branché sur le vrai backend, mais ces
+// données fictives restent en place. Si l'API est indisponible (démo, poste
+// sans Docker), repasser USE_MOCKS à true suffit à faire tourner toute
+// l'interface, connexion comprise, sans aucun appel réseau.
 
 import { ApiError } from '../api/client';
 import type { TeamCreate } from '../api/teams';
-import type { Game, Match, Team, Tournament } from '../types';
+import type { Game, Match, Team, Tournament, User } from '../types';
 
 // Typé boolean explicitement : sinon TypeScript le voit comme la constante
-// `true` et considère la branche "vraie API" comme du code mort.
-export const USE_MOCKS: boolean = true;
+// `false` et considère la branche "mocks" comme du code mort.
+export const USE_MOCKS: boolean = false;
 
 // Fixtures typées Game et Team : si le type change, TypeScript refuse de compiler
 // tant que les données fictives ne sont pas alignées avec les vrais types.
@@ -149,7 +150,6 @@ export async function createTeamMock(
   // Les champs normalement générés par le serveur sont simulés ici.
   const team: Team = {
     id: mockTeams.length + 1,
-    captain_id: 1,
     created_at: new Date().toISOString(),
     ...payload,
   };
@@ -167,80 +167,90 @@ export const MOCK_TOURNAMENTS: Tournament[] = [
     name: 'Arena Masters CS2',
     game_id: 1,
     status: 'upcoming',
-    start_date: '2026-10-05T18:00:00',
+    start_date: '2026-10-05',
     max_teams: 16,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 2,
     name: 'Valorant Winter Cup',
     game_id: 2,
     status: 'ongoing',
-    start_date: '2026-09-20T18:00:00',
+    start_date: '2026-09-20',
     max_teams: 16,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 3,
     name: 'League of Legends Championship',
     game_id: 3,
     status: 'finished',
-    start_date: '2026-08-15T14:00:00',
+    start_date: '2026-08-15',
     max_teams: 32,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 4,
     name: 'FC 25 Arena Cup',
     game_id: 4,
     status: 'upcoming',
-    start_date: '2026-10-12T15:00:00',
+    start_date: '2026-10-12',
     max_teams: 16,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 5,
     name: 'Street Fighter Open',
     game_id: 5,
     status: 'ongoing',
-    start_date: '2026-09-18T19:00:00',
+    start_date: '2026-09-18',
     max_teams: 32,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 6,
     name: 'Fortnite Battle Arena',
     game_id: 6,
     status: 'finished',
-    start_date: '2026-07-20T16:00:00',
+    start_date: '2026-07-20',
     max_teams: 24,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 7,
     name: 'CS2 Community Cup',
     game_id: 1,
     status: 'ongoing',
-    start_date: '2026-09-19T17:00:00',
+    start_date: '2026-09-19',
     max_teams: 8,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 8,
     name: 'Valorant Open Series',
     game_id: 2,
     status: 'upcoming',
-    start_date: '2026-10-20T18:00:00',
+    start_date: '2026-10-20',
     max_teams: 32,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 9,
     name: 'League Arena Masters',
     game_id: 3,
     status: 'finished',
-    start_date: '2026-08-30T16:00:00',
+    start_date: '2026-08-30',
     max_teams: 16,
+    created_at: '2026-09-01T10:00:00Z',
   },
   {
     id: 10,
     name: 'Fortnite Pro Cup',
     game_id: 6,
     status: 'upcoming',
-    start_date: '2026-10-25T20:00:00',
+    start_date: '2026-10-25',
     max_teams: 16,
+    created_at: '2026-09-01T10:00:00Z',
   },
 ];
 
@@ -266,6 +276,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 1,
     status: 'played',
     scheduled_at: '2026-09-20T18:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 2,
@@ -277,6 +288,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 0,
     status: 'played',
     scheduled_at: '2026-09-20T20:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 3,
@@ -288,6 +300,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 1,
     status: 'played',
     scheduled_at: '2026-09-21T18:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 4,
@@ -299,6 +312,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 2,
     status: 'played',
     scheduled_at: '2026-09-21T20:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 5,
@@ -310,6 +324,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 2,
     status: 'played',
     scheduled_at: '2026-09-22T18:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 6,
@@ -321,6 +336,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 1,
     status: 'played',
     scheduled_at: '2026-09-23T18:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 7,
@@ -332,6 +348,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 2,
     status: 'played',
     scheduled_at: '2026-09-23T20:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 8,
@@ -343,6 +360,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: 3,
     status: 'played',
     scheduled_at: '2026-09-24T18:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 9,
@@ -354,6 +372,7 @@ export const MOCK_MATCHES: Match[] = [
     score_b: null,
     status: 'scheduled',
     scheduled_at: '2026-09-25T18:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
   {
     id: 10,
@@ -365,10 +384,79 @@ export const MOCK_MATCHES: Match[] = [
     score_b: null,
     status: 'scheduled',
     scheduled_at: '2026-09-25T20:00:00Z',
+    created_at: '2026-09-15T10:00:00Z',
   },
 ];
 
 export function getMockMatches(): Match[] {
   // Une copie évite qu'une modification de la page ne modifie les fixtures partagées.
   return [...MOCK_MATCHES];
+}
+
+export async function updateMatchScoreMock(
+  matchId: number,
+  scoreA: number,
+  scoreB: number,
+): Promise<Match> {
+  const match = MOCK_MATCHES.find((item) => item.id === matchId);
+
+  if (!match) {
+    throw new ApiError(404, 'Match introuvable.');
+  }
+
+  // Même règle que services/match.py : un score déjà saisi ne se réécrit pas.
+  if (match.status === 'played') {
+    throw new ApiError(409, "Impossible d'enregistrer un score sur un match déjà joué.");
+  }
+
+  match.score_a = scoreA;
+  match.score_b = scoreB;
+  match.status = 'played';
+
+  return { ...match };
+}
+
+// Authentification fictive. Elle accepte n'importe quel identifiant avec un
+// mot de passe non vide : en mode repli, le but est de parcourir l'interface,
+// pas de contrôler un accès. Aucun mot de passe n'est donc écrit dans le code.
+const MOCK_TOKEN = 'mock-arena-token';
+
+let mockUser: User | null = null;
+
+export async function loginMock(identifier: string, password: string): Promise<string> {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+  if (identifier.trim() === '' || password === '') {
+    throw new ApiError(401, 'Identifiants invalides.');
+  }
+
+  const username = identifier.includes('@') ? identifier.split('@')[0] : identifier;
+
+  mockUser = {
+    id: 1,
+    username,
+    email: identifier.includes('@') ? identifier : `${identifier}@arena.fr`,
+    role: 'admin',
+    created_at: '2026-09-01T10:00:00Z',
+  };
+
+  return MOCK_TOKEN;
+}
+
+export async function getMeMock(token: string): Promise<User> {
+  // Après un F5, mockUser est perdu (variable de module) : on restaure un
+  // utilisateur générique tant que le jeton fictif est présent.
+  if (token !== MOCK_TOKEN) {
+    throw new ApiError(401, "Impossible de valider l'authentification.");
+  }
+
+  return (
+    mockUser ?? {
+      id: 1,
+      username: 'invite',
+      email: 'invite@arena.fr',
+      role: 'admin',
+      created_at: '2026-09-01T10:00:00Z',
+    }
+  );
 }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GamesPage from "./pages/GamesPage";
@@ -10,27 +10,26 @@ import TournamentsPage from "./pages/TournamentsPage";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
+    // BrowserRouter est posé dans main.tsx, au-dessus d'AuthProvider.
+    <Layout>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="/tournaments" element={<TournamentsPage />} />
-            <Route
-              path="/tournaments/:id"
-              element={<TournamentDetailPage />}
-            />
-          </Route>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/tournaments" element={<TournamentsPage />} />
+          <Route
+            path="/tournaments/:id"
+            element={<TournamentDetailPage />}
+          />
+        </Route>
 
-          <Route path="/games" element={<GamesPage />} />
-          <Route path="/teams" element={<TeamsPage />} />
-          <Route path="/matches" element={<MatchesPage />} />
+        <Route path="/games" element={<GamesPage />} />
+        <Route path="/teams" element={<TeamsPage />} />
+        <Route path="/matches" element={<MatchesPage />} />
 
-          <Route path="*" element={<Navigate to="/tournaments" replace />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+        <Route path="*" element={<Navigate to="/tournaments" replace />} />
+      </Routes>
+    </Layout>
   );
 }
 

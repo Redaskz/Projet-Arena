@@ -1,11 +1,31 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { ApiError } from "../api/client";
 import { useAuth } from "../hooks/useAuth";
 
+// `identifier` et non `email` : le backend accepte indifféremment le nom
+// d'utilisateur ou l'adresse e-mail dans le champ `username` du formulaire OAuth2.
 interface LoginForm {
-  email: string;
+  identifier: string;
   password: string;
+}
+
+// Les noms d'utilisateur font au moins 3 caractères (UserCreate côté backend),
+// et une adresse e-mail en compte forcément davantage.
+const MIN_IDENTIFIER_LENGTH = 3;
+
+function getLoginErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    // Le backend répond volontairement le même 401 pour un compte inconnu et
+    // un mauvais mot de passe : le message ne doit pas trahir lequel des deux.
+    if (error.status === 401) {
+      return "Identifiant ou mot de passe incorrect.";
+    }
+    return error.message;
+  }
+
+  return "Une erreur est survenue lors de la connexion.";
 }
 
 export default function LoginPage() {
@@ -13,7 +33,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState<LoginForm>({
-    email: "",
+    identifier: "",
     password: "",
   });
 
@@ -38,10 +58,12 @@ export default function LoginPage() {
   const validate = (): boolean => {
     const newErrors: Partial<LoginForm> = {};
 
-    if (!form.email.trim()) {
-      newErrors.email = "L'adresse e-mail est obligatoire.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "L'adresse e-mail n'est pas valide.";
+    const identifier = form.identifier.trim();
+
+    if (!identifier) {
+      newErrors.identifier = "Le nom d'utilisateur ou l'adresse e-mail est obligatoire.";
+    } else if (identifier.length < MIN_IDENTIFIER_LENGTH) {
+      newErrors.identifier = `L'identifiant doit contenir au moins ${MIN_IDENTIFIER_LENGTH} caractères.`;
     }
 
     if (!form.password.trim()) {
@@ -65,14 +87,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(form.email, form.password);
+      await login(form.identifier.trim(), form.password);
       navigate("/tournaments");
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Une erreur est survenue lors de la connexion.",
-      );
+    } catch (error: unknown) {
+      setSubmitError(getLoginErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -85,23 +103,28 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-field">
-            <label htmlFor="email">Adresse e-mail</label>
+            <label htmlFor="identifier">Nom d'utilisateur ou e-mail</label>
 
+            {/* type="text" et non "email" : le navigateur refuserait sinon un
+                simple nom d'utilisateur. */}
             <input
-              id="email"
-              type="email"
-              value={form.email}
+              id="identifier"
+              type="text"
+              autoComplete="username"
+              value={form.identifier}
               onChange={(event) =>
-                handleChange("email", event.target.value)
+                handleChange("identifier", event.target.value)
               }
               disabled={loading}
-              aria-invalid={Boolean(errors.email)}
-              aria-describedby={errors.email ? "email-error" : undefined}
+              aria-invalid={Boolean(errors.identifier)}
+              aria-describedby={
+                errors.identifier ? "identifier-error" : undefined
+              }
             />
 
-            {errors.email && (
-              <p id="email-error" className="field-error">
-                {errors.email}
+            {errors.identifier && (
+              <p id="identifier-error" className="field-error">
+                {errors.identifier}
               </p>
             )}
           </div>
@@ -112,6 +135,7 @@ export default function LoginPage() {
             <input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={form.password}
               onChange={(event) =>
                 handleChange("password", event.target.value)

@@ -7,21 +7,11 @@ import ErrorMessage from "../components/ErrorMessage";
 import Loader from "../components/Loader";
 import RegistrationList from "../components/RegistrationList";
 import StatusBadge from "../components/StatusBadge";
+import { useAuth } from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-
-type TournamentStatus = "draft" | "open" | "ongoing" | "finished";
-
-type RegistrationStatus =
-  | "pending"
-  | "accepted"
-  | "rejected";
-
-interface TournamentDetail {
-  id: number;
-  name: string;
-  description: string;
-  status: TournamentStatus;
-}
+import { useFetch } from "../hooks/useFetch";
+import { USE_MOCKS, getMockTournaments, mockFetchState } from "../mocks";
+import type { RegistrationStatus, Tournament } from "../types";
 
 interface RegistrationItem {
   id: number;
@@ -36,19 +26,27 @@ interface CommentItem {
   createdAt: string;
 }
 
+function findMockTournament(id: number): Tournament | null {
+  return getMockTournaments().find((tournament) => tournament.id === id) ?? null;
+}
+
 function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
 
   useDocumentTitle("Arena - Tournoi");
 
-  // TODO: provisoire — remplacer les données locales par api/client.ts de Yanis.
-  const [tournament] = useState<TournamentDetail>({
-    id: Number(id) || 1,
-    name: "Arena Cup",
-    description: "Tournoi amical entre équipes étudiantes.",
-    status: "open",
-  });
+  const fetched = useFetch<Tournament>(`/tournaments/${id ?? ""}`);
+  const mockTournament = findMockTournament(Number(id));
+  const { data: tournament, loading, error } = USE_MOCKS
+    ? {
+        ...mockFetchState(mockTournament),
+        error: mockTournament ? null : "Tournoi introuvable.",
+      }
+    : fetched;
 
+  // Inscriptions et commentaires n'ont pas encore de route côté backend :
+  // ces listes restent locales en attendant, quel que soit USE_MOCKS.
   const [registrations] = useState<RegistrationItem[]>([
     {
       id: 1,
@@ -76,16 +74,10 @@ function TournamentDetailPage() {
     },
   ]);
 
-  const [isLoading] = useState(false);
-  const [error] = useState<string | null>(null);
-
   async function handleCommentSubmit(content: string) {
-    // TODO: provisoire — remplacer par POST via api/client.ts,
-    // puis recharger les commentaires depuis le backend.
-
     const newComment: CommentItem = {
       id: Date.now(),
-      authorName: "Othmane",
+      authorName: user?.username ?? "Anonyme",
       content,
       createdAt: new Date().toLocaleDateString("fr-FR"),
     };
@@ -96,18 +88,19 @@ function TournamentDetailPage() {
     ]);
   }
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
-  if (error) {
-    return <ErrorMessage message={error} />;
-  }
-
   if (!id) {
     return (
       <ErrorMessage message="Identifiant du tournoi manquant." />
     );
+  }
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  // Le 404 du backend (« Tournoi introuvable ») arrive ici via useFetch.
+  if (error || !tournament) {
+    return <ErrorMessage message={error ?? "Aucune donnée reçue."} />;
   }
 
   return (
@@ -117,7 +110,12 @@ function TournamentDetailPage() {
         <StatusBadge status={tournament.status} />
       </header>
 
-      <p>{tournament.description}</p>
+      <p>
+        Début :{" "}
+        {new Date(tournament.start_date).toLocaleDateString("fr-FR")}
+        {" · "}
+        {tournament.max_teams} équipes maximum
+      </p>
 
       <RegistrationList registrations={registrations} />
 

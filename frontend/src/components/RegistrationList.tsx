@@ -1,6 +1,5 @@
 import StatusBadge from "./StatusBadge";
-
-type RegistrationStatus = "pending" | "accepted" | "rejected";
+import type { RegistrationStatus } from "../types";
 
 interface RegistrationItem {
   id: number;

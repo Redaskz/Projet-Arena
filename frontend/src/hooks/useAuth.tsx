@@ -5,19 +5,18 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-interface AuthUser {
-  id: number;
-  email: string;
-  username: string;
-}
+import { useNavigate } from "react-router-dom";
+import { getMe, login as loginRequest } from "../api/auth";
+import { TOKEN_STORAGE_KEY, setUnauthorizedHandler } from "../api/client";
+import type { User } from "../types";
+import useLocalStorage from "./useLocalStorage";
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -25,83 +24,88 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const STORAGE_KEY = "arena_auth";
-
-const DEMO_USER: AuthUser = {
-  id: 1,
-  email: "demo@arena.fr",
-  username: "Demo",
-};
-
-const DEMO_TOKEN = "mock-arena-token";
-
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // isLoading évite d'envoyer temporairement l'utilisateur vers /login
-  // pendant que la session sauvegardée est relue dans le localStorage.
-  const [isLoading, setIsLoading] = useState(true);
+  // Seul le jeton est persisté, sous la clé que relit api/client.ts. L'utilisateur
+  // n'est pas stocké : il est redemandé à GET /auth/me, qui fait foi (un compte
+  // a pu être modifié ou supprimé depuis la dernière visite).
+  const [token, setToken] = useLocalStorage<string | null>(TOKEN_STORAGE_KEY, null);
+  const [user, setUser] = useState<User | null>(null);
+
+  // isLoading évite d'envoyer l'utilisateur vers /login pendant que la session
+  // sauvegardée est vérifiée auprès du backend : sans lui, un F5 sur une route
+  // protégée éjecterait l'utilisateur avant la réponse de /auth/me.
+  // Sans jeton stocké, il n'y a rien à vérifier : on démarre directement à false.
+  const [isLoading, setIsLoading] = useState<boolean>(token !== null);
 
   useEffect(() => {
-    // Au chargement de l'application, on récupère la session sauvegardée.
-    // Cela permet de rester connecté après un F5 ou un rechargement de page.
-    const storedAuth = localStorage.getItem(STORAGE_KEY);
-
-    if (!storedAuth) {
-      setIsLoading(false);
+    // Restauration uniquement : un jeton présent mais pas encore d'utilisateur.
+    // Après une connexion, les deux sont posés ensemble et on ne refait rien.
+    if (token === null || user !== null) {
       return;
     }
 
-    try {
-      const auth = JSON.parse(storedAuth) as {
-        user: AuthUser;
-        token: string;
-      };
+    // Garde contre une réponse arrivée après démontage (double appel du
+    // StrictMode en développement, ou déconnexion pendant la requête).
+    let cancelled = false;
 
-      setUser(auth.user);
-      setToken(auth.token);
-    } catch {
-      // Si les données du localStorage sont invalides, on les supprime
-      // pour éviter de conserver une session impossible à restaurer.
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      // La lecture de la session est terminée : les routes peuvent maintenant
-      // décider normalement si l'utilisateur est connecté ou non.
-      setIsLoading(false);
-    }
-  }, []);
+    getMe(token)
+      .then((currentUser) => {
+        if (!cancelled) {
+          setUser(currentUser);
+        }
+      })
+      .catch(() => {
+        // Jeton expiré, compte supprimé ou API injoignable : la session ne
+        // peut pas être restaurée, on la vide plutôt que de garder un jeton mort.
+        if (!cancelled) {
+          setToken(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
 
-  async function login(email: string, password: string): Promise<void> {
-    // TODO: provisoire — la connexion est actuellement simulée.
-    // Elle sera remplacée par un appel au backend lorsque l'authentification
-    // réelle sera branchée sur l'endpoint /auth/login.
-    if (email !== "demo@arena.fr" || password !== "arena123") {
-      throw new Error("Identifiants invalides.");
-    }
-
-    const authData = {
-      user: DEMO_USER,
-      token: DEMO_TOKEN,
+    return () => {
+      cancelled = true;
     };
+  }, [token, user, setToken]);
 
-    setUser(authData.user);
-    setToken(authData.token);
+  useEffect(() => {
+    // Appelé par le client HTTP quand une requête authentifiée reçoit un 401 :
+    // le jeton n'est plus accepté, on vide la session et on renvoie vers la
+    // page de connexion.
+    setUnauthorizedHandler(() => {
+      setToken(null);
+      setUser(null);
+      navigate("/login", { replace: true });
+    });
 
-    // On sauvegarde la session pour qu'un rafraîchissement de la page
-    // ne déconnecte pas l'utilisateur.
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
+    return () => {
+      setUnauthorizedHandler(null);
+    };
+  }, [navigate, setToken]);
+
+  async function login(identifier: string, password: string): Promise<void> {
+    const accessToken = await loginRequest(identifier, password);
+    const currentUser = await getMe(accessToken);
+
+    // Le jeton n'est enregistré qu'une fois l'utilisateur obtenu : si /auth/me
+    // échoue, aucune demi-session ne reste stockée.
+    setToken(accessToken);
+    setUser(currentUser);
   }
 
   function logout(): void {
-    setUser(null);
+    // useLocalStorage réécrit la clé à null : le client HTTP cesse aussitôt
+    // d'envoyer le jeton, et un F5 ne restaure plus rien.
     setToken(null);
-
-    // La session est supprimée du localStorage pour que l'utilisateur
-    // soit réellement déconnecté après un nouveau chargement de la page.
-    localStorage.removeItem(STORAGE_KEY);
+    setUser(null);
   }
 
   const value: AuthContextValue = {

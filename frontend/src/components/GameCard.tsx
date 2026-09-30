@@ -19,8 +19,8 @@ function GameCard({ game }: GameCardProps) {
   return (
     <Card
       title={game.name}
-      // `||` et pas `??` : platform est typé string, mais le backend peut
-      // renvoyer null (champ facultatif) ou une chaîne vide. `||` couvre les deux.
+      // `||` et pas `??` : platform peut valoir null (champ facultatif) mais
+      // aussi une chaîne vide. `||` couvre les deux.
       subtitle={game.platform || 'Plateforme non précisée'}
       // `??` ici : on ne remplace que null, jamais une URL valide.
       imageUrl={game.cover_url ?? PLACEHOLDER_COVER}

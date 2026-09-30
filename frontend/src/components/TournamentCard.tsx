@@ -12,9 +12,6 @@ function TournamentCard({
   tournament,
   gameName,
 }: TournamentCardProps) {
-  const badgeStatus =
-    tournament.status === "upcoming" ? "open" : tournament.status;
-
   return (
     <Link
       to={`/tournaments/${tournament.id}`}
@@ -26,7 +23,7 @@ function TournamentCard({
       <Card
         title={tournament.name}
         subtitle={gameName}
-        badge={<StatusBadge status={badgeStatus} />}
+        badge={<StatusBadge status={tournament.status} />}
       >
         <p>
           Début :{" "}

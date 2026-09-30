@@ -14,7 +14,7 @@ function TeamsPage() {
   const { refetch, ...fetchedTeams } = useFetch<Team[]>('/teams');
   const fetchedGames = useFetch<Game[]>('/games');
 
-  // TODO: provisoire — données fictives tant que /teams et /games ne répondent pas.
+  // Solution de repli : USE_MOCKS à true remplace l'API par les données fictives.
   const teamsState = USE_MOCKS ? mockFetchState(getMockTeams()) : fetchedTeams;
   const gamesState = USE_MOCKS ? mockFetchState(MOCK_GAMES) : fetchedGames;
   const { data: teams } = teamsState;

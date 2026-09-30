@@ -1,46 +1,80 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ApiError } from '../api/client';
+import { updateMatchScore } from '../api/matches';
 import ErrorMessage from '../components/ErrorMessage';
 import Loader from '../components/Loader';
 import MatchRow from '../components/MatchRow';
 import StandingsTable, {
   type Standing,
 } from '../components/StandingsTable';
+import { useAuth } from '../hooks/useAuth';
+import { useFetch } from '../hooks/useFetch';
 import {
+  USE_MOCKS,
   getMockMatches,
   getMockTeams,
+  mockFetchState,
 } from '../mocks';
 import type { Match, Team } from '../types';
 
 type MatchFilter = 'all' | 'scheduled' | 'played';
+
+// Garde de type : la valeur d'un <select> n'est qu'une chaîne, on vérifie
+// qu'elle fait partie des filtres prévus plutôt que de la forcer avec `as`.
+function isMatchFilter(value: string): value is MatchFilter {
+  return value === 'all' || value === 'scheduled' || value === 'played';
+}
 
 interface ScoreForm {
   scoreA: string;
   scoreB: string;
 }
 
+function getSaveErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 401) {
+      return 'Votre session a expiré. Reconnectez-vous pour saisir un score.';
+    }
+    return error.message;
+  }
+
+  return "Impossible d'enregistrer le score.";
+}
+
 // Pas d'interface de props : la page est affichée par le routeur sans aucune
 // prop, comme GamesPage et TeamsPage. Une interface vide faisait échouer le lint.
 function MatchesPage() {
-  const [matches, setMatches] = useState<Match[]>(getMockMatches);
-  const [teams] = useState<Team[]>(getMockTeams);
+  const { user } = useAuth();
+
+  // refetch vient toujours du vrai useFetch : après une saisie de score, il
+  // provoque un nouveau rendu qui relit la liste (vraie ou fictive).
+  const { refetch, ...fetchedMatches } = useFetch<Match[]>('/matches');
+  const fetchedTeams = useFetch<Team[]>('/teams');
+
+  const matchesState = USE_MOCKS ? mockFetchState(getMockMatches()) : fetchedMatches;
+  const teamsState = USE_MOCKS ? mockFetchState(getMockTeams()) : fetchedTeams;
+  const { data: matches } = matchesState;
+  const { data: teams } = teamsState;
 
   const [filter, setFilter] = useState<MatchFilter>('all');
   const [scores, setScores] = useState<Record<number, ScoreForm>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  // Ces états gardent les branches demandées par le projet même avec les mocks.
-  const loading = false;
-  const error: string | null = null;
+  const [savingId, setSavingId] = useState<number | null>(null);
 
   const filteredMatches = useMemo(() => {
-    if (filter === 'all') {
-      return matches;
+    if (!matches || filter === 'all') {
+      return matches ?? [];
     }
 
     return matches.filter((match) => match.status === filter);
   }, [matches, filter]);
 
   const standings = useMemo<Standing[]>(() => {
+    if (!matches || !teams) {
+      return [];
+    }
+
     return teams
       .map((team) => {
         const teamMatches = matches.filter(
@@ -96,7 +130,7 @@ function MatchesPage() {
   }, [matches, teams]);
 
   const getTeam = (id: number): Team | undefined =>
-    teams.find((team) => team.id === id);
+    teams?.find((team) => team.id === id);
 
   const handleScoreChange = (
     matchId: number,
@@ -113,7 +147,7 @@ function MatchesPage() {
     }));
   };
 
-  const handleScoreSubmit = (match: Match): void => {
+  const handleScoreSubmit = async (match: Match): Promise<void> => {
     const score = scores[match.id];
 
     if (!score) {
@@ -135,33 +169,36 @@ function MatchesPage() {
       return;
     }
 
-    // On modifie le mock local pour simuler la réponse du backend.
-    setMatches((current) =>
-      current.map((currentMatch) =>
-        currentMatch.id === match.id
-          ? {
-              ...currentMatch,
-              score_a: scoreA,
-              score_b: scoreB,
-              status: 'played',
-            }
-          : currentMatch,
-      ),
-    );
-
-    setScores((current) => {
-      const next = { ...current };
-      delete next[match.id];
-      return next;
-    });
-
+    setSavingId(match.id);
     setSaveError(null);
+
+    try {
+      // Le score est écrit en base : on relit ensuite la liste plutôt que de
+      // la modifier localement, pour afficher exactement ce que l'API a retenu.
+      await updateMatchScore(match.id, scoreA, scoreB);
+
+      setScores((current) => {
+        const next = { ...current };
+        delete next[match.id];
+        return next;
+      });
+
+      refetch();
+    } catch (requestError: unknown) {
+      setSaveError(getSaveErrorMessage(requestError));
+    } finally {
+      setSavingId(null);
+    }
   };
 
-  if (loading) {
+  // État 1 : chargement. `&& !matches` : après une saisie, le refetch garde
+  // l'ancienne liste affichée au lieu de faire clignoter toute la page.
+  if ((matchesState.loading && !matches) || teamsState.loading) {
     return <Loader />;
   }
 
+  // État 2 : erreur, sur l'une ou l'autre des deux requêtes.
+  const error = matchesState.error ?? teamsState.error;
   if (error) {
     return <ErrorMessage message={error} />;
   }
@@ -170,6 +207,7 @@ function MatchesPage() {
     return <ErrorMessage message="Aucun match disponible." />;
   }
 
+  // État 3 : contenu.
   return (
     <>
       <h1>Matchs</h1>
@@ -180,15 +218,26 @@ function MatchesPage() {
         <select
           id="match-filter"
           value={filter}
-          onChange={(event) =>
-            setFilter(event.target.value as MatchFilter)
-          }
+          onChange={(event) => {
+            if (isMatchFilter(event.target.value)) {
+              setFilter(event.target.value);
+            }
+          }}
         >
           <option value="all">Tous</option>
           <option value="scheduled">À jouer</option>
           <option value="played">Terminés</option>
         </select>
       </section>
+
+      {/* PATCH /matches/{id} exige un jeton : un visiteur voit les matchs
+          mais on lui indique d'emblée qu'il faut se connecter pour saisir. */}
+      {!user && (
+        <p>
+          <Link to="/login">Connectez-vous</Link> pour saisir les scores des
+          matchs à jouer.
+        </p>
+      )}
 
       {saveError && <ErrorMessage message={saveError} />}
 
@@ -214,11 +263,11 @@ function MatchesPage() {
                   teamB={teamB}
                 />
 
-                {match.status === 'scheduled' && (
+                {user && match.status === 'scheduled' && (
                   <form
                     onSubmit={(event) => {
                       event.preventDefault();
-                      handleScoreSubmit(match);
+                      void handleScoreSubmit(match);
                     }}
                   >
                     <label htmlFor={`score-a-${match.id}`}>
@@ -257,8 +306,8 @@ function MatchesPage() {
                       }
                     />
 
-                    <button type="submit">
-                      Enregistrer le score
+                    <button type="submit" disabled={savingId === match.id}>
+                      {savingId === match.id ? 'Enregistrement...' : 'Enregistrer le score'}
                     </button>
                   </form>
                 )}

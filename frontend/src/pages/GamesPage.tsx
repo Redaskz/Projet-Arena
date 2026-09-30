@@ -14,7 +14,7 @@ const GENRE_OPTIONS = Object.entries(GENRE_LABELS).map(([value, label]) => ({ va
 
 function GamesPage() {
   const fetched = useFetch<Game[]>('/games');
-  // TODO: provisoire — données fictives tant que GET /games n'est pas branché.
+  // Solution de repli : USE_MOCKS à true remplace l'API par les données fictives.
   const { data: games, loading, error } = USE_MOCKS ? mockFetchState(MOCK_GAMES) : fetched;
 
   // Le genre choisi est gardé dans localStorage : après un F5, le filtre est
